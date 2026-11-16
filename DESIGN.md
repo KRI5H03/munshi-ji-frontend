@@ -36,7 +36,7 @@ GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and tran
 
 ## Build progress
 
-Built for real: login and firm picker, app shell, bills list, new bill, customers, bill view and print. Still mock-ups under `/design`: items, firm settings.
+Built for real: login and firm picker, app shell, bills list, new bill, customers, bill view and print, items. Still a mock-up under `/design`: firm settings.
 
 ### New bill
 
@@ -59,3 +59,10 @@ Built for real: login and firm picker, app shell, bills list, new bill, customer
 - Every figure on the sheet is the saved bill's; nothing is worked out again.
 - A long bill grows onto a second page per copy instead of being cut. The second page does not repeat the column headings yet.
 - A cancelled bill prints CANCELLED under TAX INVOICE (the API cannot cancel bills yet).
+
+### Items
+
+- List at `/items` (search by name or design no.), Add at `/items/new`, Edit at `/items/[id]`, Delete at the bottom of Edit behind "Delete NAME (DESIGN NO.)?", which also says how much stock is left.
+- Opening stock is asked only on Add. Edit shows the stock read-only: it changes only through bills (the API ignores stock on edit).
+- Design no. must be unique in the firm, whatever the capital letters; a repeat says "Design no. BC-101 is already used by another item".
+- Stock of 10 or fewer is marked Low, 0 is Out of stock (frontend rule, shared with New bill in `lib/stock.ts`).
