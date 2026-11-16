@@ -11,12 +11,14 @@ Direction A ("Refined reference") was chosen. Directions B and C are deleted; th
 
 ## Changes asked for with BUILD A
 
-### 1. Section tabs
+### 1. Menu and page headers
 
-Each sidebar section can have a small second-level menu, shown as tabs at the top of its pages:
-Bills → All bills, New bill. Customers → All customers, Add customer. Items → All items, Add item.
+No tab bars. The whole menu is one list in `components/shell/nav.ts`. Adding Purchases, Payments or Reports means adding one entry there and creating its routes. The sidebar scrolls if it grows. The phone bar shows the first four sections; a "More" button holds the rest and Log out. Each section can still carry a `subNav` list for later; nothing renders it today.
 
-The whole menu is one list in `components/shell/nav.ts`. Adding Purchases, Payments or Reports means adding one entry there and creating its routes. The sidebar scrolls if it grows. The phone bar shows the first four sections; a "More" button holds the rest and Log out.
+- **List pages:** `PageHeader` with the title on the left and actions on the right. The section's primary action (New bill, Add customer, Add item, from `primaryAction` in `nav.ts`) is the rightmost and the only filled button.
+- **Create and edit pages:** a "← Back" link above the title, to the section's list.
+- **Unsaved changes:** a form calls `useUnsavedChanges(isDirty)`. Leaving through any app link, Back or Log out then asks "Discard changes?" in an in-page dialog. Reloading or closing the tab gets the browser's own question, the only one browsers allow there.
+- **After saving:** a new bill opens its print page; a customer or item goes back to its list with a "Saved" toast.
 
 ### 2. Printed bill follows the Busy layout
 
