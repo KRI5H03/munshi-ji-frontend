@@ -1,45 +1,31 @@
 import Link from "next/link";
-import { DIRECTIONS, SCREENS } from "@/components/design/screens";
+import { SCREENS } from "@/components/design/screens";
 
-export const metadata = { title: "Munshi Ji — design options" };
+export const metadata = { title: "Munshi Ji — design mock-ups" };
 
 export default function DesignIndex() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-900">
-      <h1 className="text-3xl font-bold">Munshi Ji design options</h1>
-      <p className="mt-2 max-w-[65ch] text-lg text-neutral-600">
-        Three directions, seven screens each. All data is mock. Open any screen, then use the dark
-        strip at the top to see the same screen in the other two. Try a phone-width window too.
+    <main className="mx-auto max-w-xl px-4 py-10">
+      <h1 className="text-3xl font-bold tracking-tight">Design mock-ups</h1>
+      <p className="mt-2 text-lg text-muted-foreground">
+        Direction A, with sample data. These are the screens not yet built for real; each one is removed here once
+        its real screen works.
       </p>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
-        {DIRECTIONS.map((d) => (
-          <section key={d.letter} className="rounded-lg border border-neutral-300 bg-white p-5">
-            <h2 className="text-xl font-bold">
-              {d.letter.toUpperCase()}. {d.name}
-            </h2>
-            <p className="mt-1 text-base text-neutral-600">{d.line}</p>
-            <ol className="mt-4 divide-y divide-neutral-200 border-t border-neutral-200">
-              {SCREENS.map((s, i) => (
-                <li key={s.slug}>
-                  <Link
-                    href={`/design/${d.letter}/${s.slug}`}
-                    className="flex min-h-11 items-center gap-3 py-2 text-base font-medium underline-offset-4 hover:underline"
-                  >
-                    <span className="num w-4 text-neutral-500">{i + 1}</span>
-                    {s.name}
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </section>
+      <ol className="mt-6 divide-y divide-border rounded-xl border border-border bg-card px-5">
+        {SCREENS.map((s) => (
+          <li key={s.slug}>
+            <Link
+              href={`/design/a/${s.slug}`}
+              className="flex min-h-12 items-center py-2 text-lg font-medium underline-offset-4 hover:underline"
+            >
+              {s.name}
+            </Link>
+          </li>
         ))}
-      </div>
-
-      <p className="mt-8 text-base text-neutral-600">
-        Notes on each direction are in <code>DESIGN.md</code>. To choose one, write{" "}
-        <strong>BUILD A</strong>, <strong>BUILD B</strong> or <strong>BUILD C</strong>.
-      </p>
+      </ol>
+      <Link href="/bills" className="mt-6 inline-block text-lg font-semibold text-primary underline underline-offset-4">
+        Open the app
+      </Link>
     </main>
   );
 }
