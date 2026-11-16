@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LogOut, Menu, Plus } from "lucide-react";
@@ -142,10 +142,14 @@ function SidebarNav({ pathname, onLogout }: { pathname: string | null; onLogout:
       <GuardedLink
         href="/bills/new"
         aria-current={onNewBill ? "page" : undefined}
+        aria-keyshortcuts="Alt+N"
         className={cn(btnPrimary, "mb-4 shrink-0 justify-start", onNewBill && "ring-3 ring-ring/30")}
       >
         <Plus className="size-5" aria-hidden />
         New bill
+        <kbd className="ml-auto rounded border border-primary-foreground/40 px-1.5 font-sans text-sm font-medium">
+          Alt+N
+        </kbd>
       </GuardedLink>
       <nav aria-label="Main" className="flex flex-col gap-1">
         {SECTIONS.map((s) => (
@@ -175,8 +179,26 @@ function SidebarNav({ pathname, onLogout }: { pathname: string | null; onLogout:
   );
 }
 
+/** Alt+N opens a new bill from anywhere. (Browsers keep Ctrl+N for a new window.) */
+function useNewBillShortcut() {
+  const router = useRouter();
+  const confirmLeave = useConfirmLeave();
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      // event.code, because Alt+N types a letter like "˜" on a Mac.
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.code !== "KeyN") return;
+      event.preventDefault();
+      if (window.location.pathname === "/bills/new") return;
+      confirmLeave(() => router.push("/bills/new"));
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [router, confirmLeave]);
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const logout = useLogout();
+  useNewBillShortcut();
 
   return (
     <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[256px_minmax(0,1fr)]">
