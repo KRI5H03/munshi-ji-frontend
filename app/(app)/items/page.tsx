@@ -1,7 +1,7 @@
-import { NotBuiltYet } from "@/components/shell/not-built-yet";
+import { ItemsList } from "@/components/items/items-list";
 
 export const metadata = { title: "Items — Munshi Ji" };
 
-export default function Page() {
-  return <NotBuiltYet title="Items" mockup="items" listOf="/items" />;
+export default function ItemsPage() {
+  return <ItemsList />;
 }
