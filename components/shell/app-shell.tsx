@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LogOut, Menu, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { btnPrimary } from "@/components/ui/kit";
-import { PHONE_BAR_SLOTS, SECTIONS, activeTab, sectionFor, type Section } from "@/components/shell/nav";
+import { PHONE_BAR_SLOTS, SECTIONS, activeTab, sectionFor } from "@/components/shell/nav";
 import { clearSession, currentBusiness, useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -48,8 +48,9 @@ function useLogout() {
   };
 }
 
-function SectionTabs({ section, pathname }: { section: Section; pathname: string }) {
-  if (section.tabs.length === 0) return null;
+function SectionTabs({ pathname }: { pathname: string }) {
+  const section = sectionFor(pathname);
+  if (!section || section.tabs.length === 0) return null;
   const current = activeTab(section, pathname);
   return (
     <nav aria-label={section.label} className="border-b border-border bg-card px-4 lg:px-8">
@@ -76,8 +77,9 @@ function SectionTabs({ section, pathname }: { section: Section; pathname: string
   );
 }
 
-function PhoneBar({ active, onLogout }: { active?: Section; onLogout: () => void }) {
+function PhoneBar({ pathname, onLogout }: { pathname: string | null; onLogout: () => void }) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const active = pathname ? sectionFor(pathname) : undefined;
   // "More" always exists on the phone: it holds the sections that do not fit, and Log out.
   const shown = SECTIONS.slice(0, PHONE_BAR_SLOTS - 1);
   const rest = SECTIONS.slice(PHONE_BAR_SLOTS - 1);
@@ -142,48 +144,72 @@ function PhoneBar({ active, onLogout }: { active?: Section; onLogout: () => void
   );
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const active = sectionFor(pathname);
-  const logout = useLogout();
+/**
+ * Reads the current address. Wrapped in Suspense wherever it is used: on a page whose
+ * id is only known at request time (like /bills/[id]) the address cannot be prerendered,
+ * so the fallback (the same UI with nothing highlighted) is prerendered instead.
+ */
+function WithPathname({ render }: { render: (pathname: string | null) => React.ReactNode }) {
+  return render(usePathname());
+}
+
+function Live({ render }: { render: (pathname: string | null) => React.ReactNode }) {
+  return (
+    <Suspense fallback={render(null)}>
+      <WithPathname render={render} />
+    </Suspense>
+  );
+}
+
+function SidebarNav({ pathname, onLogout }: { pathname: string | null; onLogout: () => void }) {
+  const active = pathname ? sectionFor(pathname) : undefined;
   const onNewBill = pathname === "/bills/new";
+  return (
+    <>
+      <Link
+        href="/bills/new"
+        aria-current={onNewBill ? "page" : undefined}
+        className={cn(btnPrimary, "mb-4 shrink-0 justify-start", onNewBill && "ring-3 ring-ring/30")}
+      >
+        <Plus className="size-5" aria-hidden />
+        New bill
+      </Link>
+      <nav aria-label="Main" className="flex flex-col gap-1">
+        {SECTIONS.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            aria-current={s === active ? "page" : undefined}
+            className={cn(
+              "flex h-12 shrink-0 items-center gap-3 rounded-lg px-4 text-lg font-medium hover:bg-muted",
+              s === active && "bg-accent font-semibold text-accent-foreground hover:bg-accent",
+            )}
+          >
+            <s.icon className="size-5" aria-hidden />
+            {s.label}
+          </Link>
+        ))}
+      </nav>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="mt-auto flex h-12 shrink-0 items-center gap-3 rounded-lg px-4 text-lg font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+      >
+        <LogOut className="size-5" aria-hidden />
+        Log out
+      </button>
+    </>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const logout = useLogout();
 
   return (
     <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[256px_minmax(0,1fr)]">
       <aside className="no-print sticky top-0 hidden h-dvh flex-col gap-2 overflow-y-auto border-r border-border bg-card p-4 lg:flex">
         <FirmSwitch className="mb-4" />
-        <Link
-          href="/bills/new"
-          aria-current={onNewBill ? "page" : undefined}
-          className={cn(btnPrimary, "mb-4 shrink-0 justify-start", onNewBill && "ring-3 ring-ring/30")}
-        >
-          <Plus className="size-5" aria-hidden />
-          New bill
-        </Link>
-        <nav aria-label="Main" className="flex flex-col gap-1">
-          {SECTIONS.map((s) => (
-            <Link
-              key={s.href}
-              href={s.href}
-              aria-current={s === active ? "page" : undefined}
-              className={cn(
-                "flex h-12 shrink-0 items-center gap-3 rounded-lg px-4 text-lg font-medium hover:bg-muted",
-                s === active && "bg-accent font-semibold text-accent-foreground hover:bg-accent",
-              )}
-            >
-              <s.icon className="size-5" aria-hidden />
-              {s.label}
-            </Link>
-          ))}
-        </nav>
-        <button
-          type="button"
-          onClick={logout}
-          className="mt-auto flex h-12 shrink-0 items-center gap-3 rounded-lg px-4 text-lg font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <LogOut className="size-5" aria-hidden />
-          Log out
-        </button>
+        <Live render={(pathname) => <SidebarNav pathname={pathname} onLogout={logout} />} />
       </aside>
 
       <div className="min-w-0">
@@ -194,11 +220,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             New bill
           </Link>
         </header>
-        {active && <SectionTabs section={active} pathname={pathname} />}
+        <Live render={(pathname) => (pathname ? <SectionTabs pathname={pathname} /> : null)} />
         <main className="px-4 pt-6 pb-28 lg:px-8 lg:pt-8 lg:pb-12">{children}</main>
       </div>
 
-      <PhoneBar active={active} onLogout={logout} />
+      <Live render={(pathname) => <PhoneBar pathname={pathname} onLogout={logout} />} />
     </div>
   );
 }
