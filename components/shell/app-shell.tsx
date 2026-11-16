@@ -201,7 +201,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useNewBillShortcut();
 
   return (
-    <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[256px_minmax(0,1fr)]">
+    <div className="app-shell min-h-dvh bg-background lg:grid lg:grid-cols-[256px_minmax(0,1fr)]">
       <aside className="no-print sticky top-0 hidden h-dvh flex-col gap-2 overflow-y-auto border-r border-border bg-card p-4 lg:flex">
         <FirmSwitch className="mb-4" />
         <Live render={(pathname) => <SidebarNav pathname={pathname} onLogout={logout} />} />
@@ -215,7 +215,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             New bill
           </GuardedLink>
         </header>
-        <main className="px-4 pt-6 pb-28 lg:px-8 lg:pt-8 lg:pb-12">{children}</main>
+        <main className="app-main px-4 pt-6 pb-28 lg:px-8 lg:pt-8 lg:pb-12">{children}</main>
       </div>
 
       <Live render={(pathname) => <PhoneBar pathname={pathname} onLogout={logout} />} />

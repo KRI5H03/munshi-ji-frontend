@@ -72,8 +72,11 @@ function billedTo(invoice: Invoice): Party {
 const COLS = ["9mm", "auto", "21mm", "19mm", "18mm", "13mm", "22mm", "27mm"];
 const HEADS = ["S.N.", "Description of Goods", "HSN/SAC", "D. No.", "Qty.", "Unit", "Price", "Amount"];
 const RIGHT = new Set([4, 6, 7]);
-/** The printed tax invoice, laid out like the firm's Busy bills. One of these per copy. */
-export function PrintSheetA({ firm, sale, copy }: { firm: Business; sale: SaleDetail; copy: string }) {
+/**
+ * The printed tax invoice, laid out like the firm's Busy bills. One of these per copy.
+ * Every figure comes from the saved bill (GET /sales/:id); nothing is worked out again here.
+ */
+export function PrintSheet({ firm, sale, copy }: { firm: Business; sale: SaleDetail; copy: string }) {
   const { invoice, lines, taxSummary } = sale;
   const interState = invoice.igst !== 0;
   const rates = groupTaxByRate(taxSummary);
@@ -106,6 +109,9 @@ export function PrintSheetA({ firm, sale, copy }: { firm: Business; sale: SaleDe
         </div>
         <div className="mt-[1mm] text-center">
           <p className="font-bold underline underline-offset-2">TAX INVOICE</p>
+          {invoice.status === "cancelled" && (
+            <p className="mt-[1mm] inline-block border-2 border-black px-[3mm] text-[12pt] font-bold">CANCELLED</p>
+          )}
           <h1 className="mt-[1mm] text-[20pt] leading-tight font-bold">{firm.name}</h1>
           {firm.msmeUdhyamNo && <p>MSME Udyam No. : {firm.msmeUdhyamNo}</p>}
           <p>{firm.address}</p>
@@ -148,7 +154,7 @@ export function PrintSheetA({ firm, sale, copy }: { firm: Business; sale: SaleDe
         </div>
 
         {/* The empty row stretches, so a short bill still fills the page and the column rules run to the bottom. */}
-        <div className="min-h-0 flex-1">
+        <div className="flex-1">
           <table className="h-full">
             <colgroup>
               {COLS.map((width, i) => (
