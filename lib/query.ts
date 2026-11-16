@@ -24,7 +24,10 @@ export const keys = {
   sale: (businessId: string, id: string) => ["firm", businessId, "sales", "one", id] as const,
   /** Prefix for every item list; invalidate after a bill is saved, since stock changes. */
   items: (businessId: string) => ["firm", businessId, "items"] as const,
-  itemsSearch: (businessId: string, search: string) => ["firm", businessId, "items", { search }] as const,
+  /** Every item list (searches), but not single items: refresh these after a delete. */
+  itemLists: (businessId: string) => ["firm", businessId, "items", "list"] as const,
+  itemsSearch: (businessId: string, search: string) => ["firm", businessId, "items", "list", { search }] as const,
+  item: (businessId: string, id: string) => ["firm", businessId, "items", "one", id] as const,
   contacts: (businessId: string) => ["firm", businessId, "contacts"] as const,
   /** Every contact list (searches), but not single contacts: refresh these after a delete. */
   contactLists: (businessId: string) => ["firm", businessId, "contacts", "list"] as const,
