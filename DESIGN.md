@@ -22,7 +22,7 @@ No tab bars. The whole menu is one list in `components/shell/nav.ts`. Adding Pur
 
 ### 2. Printed bill follows the Busy layout
 
-`components/design/a/print-sheet.tsx`, one A4 page per copy (Original Copy, Duplicate Copy, Triplicate Copy):
+`components/bills/print/print-sheet.tsx`, one A4 page per copy (Original Copy, Duplicate Copy, Triplicate Copy):
 GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and transport columns, Billed to and Shipped to with PAN, mobile, Aadhaar and GSTIN/UIN, the items box (S.N., Description of Goods, HSN/SAC, D. No., Qty., Unit, Price, Amount) with the discount, tax and round-off lines inside it, Grand Total with total pieces, tax summary by rate, amount in words, bank details on one row, then terms from "E.& O.E.", Receiver's Signature and "For FIRM".
 
 ## Things that are not in the API (my calls)
@@ -36,7 +36,7 @@ GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and tran
 
 ## Build progress
 
-Built for real: login and firm picker, app shell, bills list, new bill, customers. Still mock-ups under `/design`: items, firm settings, print.
+Built for real: login and firm picker, app shell, bills list, new bill, customers, bill view and print. Still mock-ups under `/design`: items, firm settings.
 
 ### New bill
 
@@ -52,3 +52,10 @@ Built for real: login and firm picker, app shell, bills list, new bill, customer
 - The API cannot empty a field once it has a value, so emptying one says "PAN cannot be emptied once saved" instead of being silently ignored.
 - The Aadhaar number is never shown back (the API only returns it in stored form). Edit says one is saved and lets you type a new one.
 - Edit sends only the fields that changed.
+
+### Bill view and print
+
+- `/bills/[id]` ("Open / Print", and where a new bill lands after saving) loads `GET /sales/:id` and the firm profile, and shows the three copies as A4 sheets. Print (focused on arrival, so Enter prints) or Ctrl+P prints them as three pages. The page title becomes the PDF file name, like "Bill 1-2026-27".
+- Every figure on the sheet is the saved bill's; nothing is worked out again.
+- A long bill grows onto a second page per copy instead of being cut. The second page does not repeat the column headings yet.
+- A cancelled bill prints CANCELLED under TAX INVOICE (the API cannot cancel bills yet).
