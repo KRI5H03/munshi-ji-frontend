@@ -1,5 +1,5 @@
 import { Check, Trash2 } from "lucide-react";
-import { AShell, Card, Field, PageHead, btnOutline, btnPrimary, inputCls } from "@/components/design/a/ui";
+import { AShell, Card, Field, PageHeader, btnOutline, btnPrimary, inputCls } from "@/components/design/a/ui";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { amountInWords } from "@/lib/amount-in-words";
@@ -15,7 +15,7 @@ export default function NewBillA() {
 
   return (
     <AShell active="new-bill">
-      <PageHead title="New bill" sub="The bill number is given when you save" />
+      <PageHeader title="New bill" sub="The bill number is given when you save" />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="grid gap-6">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CircleAlert, Plus, Search, X } from "lucide-react";
-import { Card, PageHead, btnOutline, btnPrimary, inputCls } from "@/components/ui/kit";
+import { PrimaryAction } from "@/components/shell/list-actions";
+import { GuardedLink } from "@/components/shell/navigation-guard";
+import { Card, PageHeader, btnOutline, btnPrimary, inputCls } from "@/components/ui/kit";
 import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useFirmId } from "@/hooks/use-firm-id";
@@ -110,9 +111,9 @@ function BillsTable({ sales }: { sales: SaleRow[] }) {
                 <Amount sale={s} className="text-lg" />
               </td>
               <td className="px-6 py-3 text-right">
-                <Link href={`/bills/${s.id}`} className={btnOutline} aria-label={`Open or print bill ${s.invoiceNo}`}>
+                <GuardedLink href={`/bills/${s.id}`} className={btnOutline} aria-label={`Open or print bill ${s.invoiceNo}`}>
                   Open / Print
-                </Link>
+                </GuardedLink>
               </td>
             </tr>
           ))}
@@ -127,7 +128,7 @@ function BillCards({ sales }: { sales: SaleRow[] }) {
     <ul className="grid gap-3 sm:hidden">
       {sales.map((s) => (
         <li key={s.id}>
-          <Link
+          <GuardedLink
             href={`/bills/${s.id}`}
             className="block rounded-xl border border-border bg-card p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
@@ -140,7 +141,7 @@ function BillCards({ sales }: { sales: SaleRow[] }) {
               <span className="num text-muted-foreground">{formatDate(s.date)}</span>
               {s.status === "cancelled" && <CancelledLabel />}
             </span>
-          </Link>
+          </GuardedLink>
         </li>
       ))}
     </ul>
@@ -216,10 +217,10 @@ export function BillsList() {
     body = (
       <Message title="No bills yet">
         <p className="text-muted-foreground">Bills you make will be listed here, newest first.</p>
-        <Link href="/bills/new" className={btnPrimary}>
+        <GuardedLink href="/bills/new" className={btnPrimary}>
           <Plus className="size-5" aria-hidden />
           Make your first bill
-        </Link>
+        </GuardedLink>
       </Message>
     );
   } else {
@@ -238,16 +239,7 @@ export function BillsList() {
 
   return (
     <>
-      <PageHead
-        title="Bills"
-        sub="Newest first"
-        action={
-          <Link href="/bills/new" className={cn(btnPrimary, "hidden lg:inline-flex")}>
-            <Plus className="size-5" aria-hidden />
-            New bill
-          </Link>
-        }
-      />
+      <PageHeader title="Bills" sub="Newest first" actions={<PrimaryAction sectionHref="/bills" />} />
 
       <Today />
 

@@ -4,7 +4,7 @@ import {
   Card,
   Field,
   FieldShell,
-  PageHead,
+  PageHeader,
   btnOutline,
   btnPrimary,
   inputCls,
@@ -17,7 +17,7 @@ import { LOW_STOCK_AT, items } from "@/lib/mock";
 export default function ItemsA() {
   return (
     <AShell active="items">
-      <PageHead title="Items" sub="Stock goes down by itself when you save a bill" />
+      <PageHeader title="Items" sub="Stock goes down by itself when you save a bill" />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div>

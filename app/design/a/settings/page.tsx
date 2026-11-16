@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { AShell, Card, Field, FieldShell, PageHead, btnPrimary } from "@/components/design/a/ui";
+import { AShell, Card, Field, FieldShell, PageHeader, btnPrimary } from "@/components/design/a/ui";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { business } from "@/lib/mock";
@@ -7,7 +7,7 @@ import { business } from "@/lib/mock";
 export default function SettingsA() {
   return (
     <AShell active="settings">
-      <PageHead title="Firm settings" sub="Everything here prints on every bill. Only the owner can change it." />
+      <PageHeader title="Firm settings" sub="Everything here prints on every bill. Only the owner can change it." />
 
       <form className="grid max-w-4xl gap-6">
         <Card>

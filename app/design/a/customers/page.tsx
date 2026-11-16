@@ -4,7 +4,7 @@ import {
   Card,
   Field,
   FieldShell,
-  PageHead,
+  PageHeader,
   btnDanger,
   btnOutline,
   btnPrimary,
@@ -22,7 +22,7 @@ const TYPES = ["Customer", "Supplier", "Both"] as const;
 export default function CustomersA() {
   return (
     <AShell active="customers">
-      <PageHead title="Customers" sub={`${contacts.length} parties, A to Z`} />
+      <PageHeader title="Customers" sub={`${contacts.length} parties, A to Z`} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div>

@@ -13,22 +13,32 @@ export const btnPrimary = cn(btn, "bg-primary text-primary-foreground hover:bg-p
 export const btnOutline = cn(btn, "border border-input bg-card text-foreground hover:bg-muted");
 export const btnDanger = cn(btn, "border border-destructive/40 bg-card text-destructive hover:bg-destructive/5");
 
-export function PageHead({
+/**
+ * Top of every page: title (and a short line under it) on the left, actions on the right.
+ * List pages pass their actions with the primary one last, the only filled button.
+ * Create and edit pages pass `back`, a link above the title to the section's list.
+ */
+export function PageHeader({
   title,
   sub,
-  action,
+  back,
+  actions,
 }: {
   title: string;
   sub?: string;
-  action?: React.ReactNode;
+  back?: React.ReactNode;
+  actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {sub && <p className="mt-1 text-lg text-muted-foreground">{sub}</p>}
+    <div className="mb-6">
+      {back && <div className="mb-3">{back}</div>}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+          {sub && <p className="mt-1 text-lg text-muted-foreground">{sub}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}
       </div>
-      {action}
     </div>
   );
 }

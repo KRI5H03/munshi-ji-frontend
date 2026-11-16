@@ -1,13 +1,13 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LogOut, Menu, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { btnPrimary } from "@/components/ui/kit";
-import { PHONE_BAR_SLOTS, SECTIONS, activeTab, sectionFor } from "@/components/shell/nav";
+import { PHONE_BAR_SLOTS, SECTIONS, sectionFor } from "@/components/shell/nav";
+import { GuardedLink, useConfirmLeave } from "@/components/shell/navigation-guard";
 import { clearSession, currentBusiness, useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -29,9 +29,9 @@ function FirmSwitch({ className }: { className?: string }) {
   const box =
     "flex min-h-12 items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2 text-left";
   return many ? (
-    <Link href="/firms" className={cn(box, "hover:bg-muted", className)}>
+    <GuardedLink href="/firms" className={cn(box, "hover:bg-muted", className)}>
       {body}
-    </Link>
+    </GuardedLink>
   ) : (
     <div className={cn(box, className)}>{body}</div>
   );
@@ -40,41 +40,14 @@ function FirmSwitch({ className }: { className?: string }) {
 function useLogout() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  return () => {
-    clearSession();
-    queryClient.clear();
-    toast.success("Logged out");
-    router.replace("/login");
-  };
-}
-
-function SectionTabs({ pathname }: { pathname: string }) {
-  const section = sectionFor(pathname);
-  if (!section || section.tabs.length === 0) return null;
-  const current = activeTab(section, pathname);
-  return (
-    <nav aria-label={section.label} className="border-b border-border bg-card px-4 lg:px-8">
-      <ul className="-mb-px flex gap-1 overflow-x-auto">
-        {section.tabs.map((tab) => {
-          const active = tab === current;
-          return (
-            <li key={tab.href}>
-              <Link
-                href={tab.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex h-12 items-center border-b-[3px] border-transparent px-4 font-medium whitespace-nowrap text-muted-foreground transition-colors duration-150 hover:text-foreground",
-                  active && "border-primary font-semibold text-accent-foreground hover:text-accent-foreground",
-                )}
-              >
-                {tab.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
+  const confirmLeave = useConfirmLeave();
+  return () =>
+    confirmLeave(() => {
+      clearSession();
+      queryClient.clear();
+      toast.success("Logged out");
+      router.replace("/login");
+    });
 }
 
 function PhoneBar({ pathname, onLogout }: { pathname: string | null; onLogout: () => void }) {
@@ -90,7 +63,7 @@ function PhoneBar({ pathname, onLogout }: { pathname: string | null; onLogout: (
       {moreOpen && (
         <div className="border-t border-border bg-card p-2 shadow-[0_-8px_24px_rgb(0_0_0/0.08)]">
           {rest.map(({ href, label, icon: Icon }) => (
-            <Link
+            <GuardedLink
               key={href}
               href={href}
               onClick={() => setMoreOpen(false)}
@@ -98,7 +71,7 @@ function PhoneBar({ pathname, onLogout }: { pathname: string | null; onLogout: (
             >
               <Icon className="size-5" aria-hidden />
               {label}
-            </Link>
+            </GuardedLink>
           ))}
           <button
             type="button"
@@ -116,7 +89,7 @@ function PhoneBar({ pathname, onLogout }: { pathname: string | null; onLogout: (
         style={{ gridTemplateColumns: `repeat(${shown.length + 1}, minmax(0, 1fr))` }}
       >
         {shown.map((s) => (
-          <Link
+          <GuardedLink
             key={s.href}
             href={s.href}
             aria-current={s === active ? "page" : undefined}
@@ -125,7 +98,7 @@ function PhoneBar({ pathname, onLogout }: { pathname: string | null; onLogout: (
           >
             <s.icon className="size-5" aria-hidden />
             {s.short}
-          </Link>
+          </GuardedLink>
         ))}
         <button
           type="button"
@@ -166,17 +139,17 @@ function SidebarNav({ pathname, onLogout }: { pathname: string | null; onLogout:
   const onNewBill = pathname === "/bills/new";
   return (
     <>
-      <Link
+      <GuardedLink
         href="/bills/new"
         aria-current={onNewBill ? "page" : undefined}
         className={cn(btnPrimary, "mb-4 shrink-0 justify-start", onNewBill && "ring-3 ring-ring/30")}
       >
         <Plus className="size-5" aria-hidden />
         New bill
-      </Link>
+      </GuardedLink>
       <nav aria-label="Main" className="flex flex-col gap-1">
         {SECTIONS.map((s) => (
-          <Link
+          <GuardedLink
             key={s.href}
             href={s.href}
             aria-current={s === active ? "page" : undefined}
@@ -187,7 +160,7 @@ function SidebarNav({ pathname, onLogout }: { pathname: string | null; onLogout:
           >
             <s.icon className="size-5" aria-hidden />
             {s.label}
-          </Link>
+          </GuardedLink>
         ))}
       </nav>
       <button
@@ -215,12 +188,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="min-w-0">
         <header className="no-print flex items-center gap-3 border-b border-border bg-card px-4 py-3 lg:hidden">
           <FirmSwitch className="min-w-0 flex-1" />
-          <Link href="/bills/new" className={btnPrimary}>
+          <GuardedLink href="/bills/new" className={btnPrimary}>
             <Plus className="size-5" aria-hidden />
             New bill
-          </Link>
+          </GuardedLink>
         </header>
-        <Live render={(pathname) => (pathname ? <SectionTabs pathname={pathname} /> : null)} />
         <main className="px-4 pt-6 pb-28 lg:px-8 lg:pt-8 lg:pb-12">{children}</main>
       </div>
 
