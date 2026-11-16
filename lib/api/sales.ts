@@ -32,3 +32,15 @@ export async function createSale(body: CreateSaleBody): Promise<Invoice> {
 export function getSale(id: string, signal?: AbortSignal): Promise<SaleDetail> {
   return api<SaleDetail>(`/sales/${encodeURIComponent(id)}`, { signal });
 }
+
+/**
+ * POST /api/sales/:id/cancel (owner only). The bill keeps its number and stays in the list as
+ * cancelled; stock goes back and the customer's ledger gets a matching credit.
+ */
+export async function cancelSale(id: string, reason: string): Promise<Invoice> {
+  const res = await api<{ invoice: Invoice }>(`/sales/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    body: { reason },
+  });
+  return res.invoice;
+}

@@ -33,3 +33,12 @@ export async function updateItem(id: string, body: Partial<ItemBody>): Promise<I
 export function deleteItem(id: string): Promise<void> {
   return api<void>(`/items/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
+
+/**
+ * POST /api/items/:id/adjust: add (positive) or remove (negative) stock by hand, with a note.
+ * Fails with 409 INSUFFICIENT_STOCK when stock would go below 0.
+ */
+export async function adjustStock(id: string, body: { change: number; note: string }): Promise<Item> {
+  const res = await api<{ item: Item }>(`/items/${encodeURIComponent(id)}/adjust`, { method: "POST", body });
+  return res.item;
+}
