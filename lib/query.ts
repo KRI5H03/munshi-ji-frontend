@@ -18,4 +18,7 @@ export function makeQueryClient() {
 export const keys = {
   me: ["me"] as const,
   firm: (businessId: string) => ["firm", businessId] as const,
+  /** Prefix for every bill list of a firm; invalidate this after saving a bill. */
+  sales: (businessId: string) => ["firm", businessId, "sales"] as const,
+  salesSearch: (businessId: string, search: string) => ["firm", businessId, "sales", { search }] as const,
 };
