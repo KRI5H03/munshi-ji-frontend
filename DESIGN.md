@@ -36,7 +36,7 @@ GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and tran
 
 ## Build progress
 
-Built for real: login and firm picker, app shell, bills list, new bill. Still mock-ups under `/design`: customers, items, firm settings, print.
+Built for real: login and firm picker, app shell, bills list, new bill, customers. Still mock-ups under `/design`: items, firm settings, print.
 
 ### New bill
 
@@ -44,3 +44,11 @@ Built for real: login and firm picker, app shell, bills list, new bill. Still mo
 - Keyboard: Alt+N opens a new bill from anywhere (browsers keep Ctrl+N for a new window). Enter moves to the next field. Up/Down and Enter pick a customer or item. Ctrl+S (⌘S on a Mac) saves.
 - Stock is checked as you type ("Only 20 left of T-101"); the server checks again when saving.
 - After a save or a discard, New bill starts fresh. A draft you only walked away from is kept (Next.js keeps hidden pages), and still asks before it is thrown away.
+
+### Customers
+
+- List at `/customers`, Add at `/customers/new`, Edit at `/customers/[id]`. Delete sits at the bottom of Edit, behind "Delete NAME?". It is a soft delete; old bills keep the party's details.
+- A valid GSTIN sets the state (the State box locks and says so); without a GSTIN the state must be chosen.
+- The API cannot empty a field once it has a value, so emptying one says "PAN cannot be emptied once saved" instead of being silently ignored.
+- The Aadhaar number is never shown back (the API only returns it in stored form). Edit says one is saved and lets you type a new one.
+- Edit sends only the fields that changed.
