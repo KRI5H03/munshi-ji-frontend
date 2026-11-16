@@ -25,6 +25,9 @@ export const keys = {
   items: (businessId: string) => ["firm", businessId, "items"] as const,
   itemsSearch: (businessId: string, search: string) => ["firm", businessId, "items", { search }] as const,
   contacts: (businessId: string) => ["firm", businessId, "contacts"] as const,
-  contactsSearch: (businessId: string, search: string) => ["firm", businessId, "contacts", { search }] as const,
+  /** Every contact list (searches), but not single contacts: refresh these after a delete. */
+  contactLists: (businessId: string) => ["firm", businessId, "contacts", "list"] as const,
+  contactsSearch: (businessId: string, search: string) => ["firm", businessId, "contacts", "list", { search }] as const,
+  contact: (businessId: string, id: string) => ["firm", businessId, "contacts", "one", id] as const,
   profile: (businessId: string) => ["firm", businessId, "profile"] as const,
 };
