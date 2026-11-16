@@ -2,7 +2,10 @@
 // and turns every failure into an ApiError shaped like docs/API.md.
 import { clearBusiness, clearSession, getSession } from "@/lib/session";
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api").replace(/\/$/, "");
+// NEXT_PUBLIC_API_URL is the backend's address (e.g. http://localhost:4000); every route lives under /api.
+// A value that already ends in /api is accepted too.
+const SERVER_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "").replace(/\/api$/, "");
+const BASE_URL = `${SERVER_URL}/api`;
 
 export type FieldIssue = { field: string; message: string };
 
