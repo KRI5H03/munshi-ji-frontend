@@ -36,4 +36,11 @@ GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and tran
 
 ## Build progress
 
-Built for real: login and firm picker, app shell, bills list. Still mock-ups under `/design`: new bill, customers, items, firm settings, print.
+Built for real: login and firm picker, app shell, bills list, new bill. Still mock-ups under `/design`: customers, items, firm settings, print.
+
+### New bill
+
+- Live total uses a copy of the backend's integer maths (`lib/bill/calc.ts`) and GST rules (`lib/bill/gst-rules.ts`, keep in step with the backend's `src/config/gstRules.ts`). Tests in `tests/`; it was also checked against the backend's own code on 5,000 random bills. The saved bill always shows the server's figures.
+- Keyboard: Alt+N opens a new bill from anywhere (browsers keep Ctrl+N for a new window). Enter moves to the next field. Up/Down and Enter pick a customer or item. Ctrl+S (⌘S on a Mac) saves.
+- Stock is checked as you type ("Only 20 left of T-101"); the server checks again when saving.
+- After a save or a discard, New bill starts fresh. A draft you only walked away from is kept (Next.js keeps hidden pages), and still asks before it is thrown away.
