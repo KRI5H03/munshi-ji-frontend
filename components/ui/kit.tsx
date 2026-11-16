@@ -2,6 +2,7 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export const inputCls =
   "h-12 rounded-lg border-input bg-card px-4 text-base md:text-base transition-colors duration-150";
@@ -47,6 +48,11 @@ export function Card({ className, ...props }: React.ComponentProps<"section">) {
   return <section className={cn("rounded-xl border border-border bg-card p-5 sm:p-6", className)} {...props} />;
 }
 
+/** The hint or error under a field, with an id the input points to (aria-describedby). */
+function describedById(id: string, hint?: string, error?: string): string | undefined {
+  return error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+}
+
 export function FieldShell({
   label,
   htmlFor,
@@ -69,31 +75,78 @@ export function FieldShell({
       </Label>
       {children}
       {error ? (
-        <p className="mt-2 font-medium text-destructive">{error}</p>
+        <p id={`${htmlFor}-error`} className="mt-2 font-medium text-destructive">
+          {error}
+        </p>
       ) : hint ? (
-        <p className="mt-2 text-muted-foreground">{hint}</p>
+        <p id={`${htmlFor}-hint`} className="mt-2 text-muted-foreground">
+          {hint}
+        </p>
       ) : null}
     </div>
   );
 }
 
-export function Field({
+type FieldExtras = { label: string; hint?: string; error?: string; inputClassName?: string };
+
+export function Field({ label, hint, error, className, inputClassName, ...props }: React.ComponentProps<"input"> & FieldExtras) {
+  const id = useId();
+  return (
+    <FieldShell label={label} htmlFor={id} hint={hint} error={error} className={className}>
+      <Input
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedById(id, hint, error)}
+        className={cn(inputCls, inputClassName)}
+        {...props}
+      />
+    </FieldShell>
+  );
+}
+
+export function TextareaField({
   label,
   hint,
   error,
   className,
   inputClassName,
   ...props
-}: React.ComponentProps<"input"> & {
-  label: string;
-  hint?: string;
-  error?: string;
-  inputClassName?: string;
-}) {
+}: React.ComponentProps<"textarea"> & FieldExtras) {
   const id = useId();
   return (
     <FieldShell label={label} htmlFor={id} hint={hint} error={error} className={className}>
-      <Input id={id} aria-invalid={error ? true : undefined} className={cn(inputCls, inputClassName)} {...props} />
+      <Textarea
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedById(id, hint, error)}
+        className={cn("min-h-24 rounded-lg bg-card px-4 py-3 text-base md:text-base", inputClassName)}
+        {...props}
+      />
+    </FieldShell>
+  );
+}
+
+export function SelectField({
+  label,
+  hint,
+  error,
+  className,
+  inputClassName,
+  children,
+  ...props
+}: React.ComponentProps<"select"> & FieldExtras) {
+  const id = useId();
+  return (
+    <FieldShell label={label} htmlFor={id} hint={hint} error={error} className={className}>
+      <select
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedById(id, hint, error)}
+        className={cn(selectCls, "aria-invalid:border-destructive disabled:bg-muted disabled:text-muted-foreground", inputClassName)}
+        {...props}
+      >
+        {children}
+      </select>
     </FieldShell>
   );
 }

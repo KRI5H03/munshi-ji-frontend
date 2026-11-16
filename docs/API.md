@@ -55,6 +55,8 @@ The token comes from login/register and lasts **7 days**. It identifies the
 | 403 | `FORBIDDEN` | not your firm, or staff doing an owner-only action | show `message` |
 | 404 | `*_NOT_FOUND` / `NOT_FOUND` | record or route does not exist | show `message` |
 | 409 | `ALREADY_EXISTS` | duplicate (email, GSTIN, design no.) | show "already exists" |
+| 409 | `INSUFFICIENT_STOCK` | not enough stock for a bill or a stock removal | show `message` |
+| 409 | `ALREADY_CANCELLED` | bill was cancelled before | show `message` |
 | 500 | `INTERNAL` | bug | show "Something went wrong" |
 
 Example `VALIDATION_FAILED`:
@@ -288,10 +290,24 @@ max 50.
 
 ### `PATCH /api/items/:id` — Firm
 `description`, `hsnCode`, `designNo`, `unit` — optional, at least one.
-**Stock cannot be edited here** (it only moves through bills); `stockQty`
-in the body is ignored.
+**Stock cannot be edited here**; use `POST /api/items/:id/adjust`.
+`stockQty` in the body is ignored.
 
 → `200 { "item": Item }`
+
+### `POST /api/items/:id/adjust` — Firm
+Add or remove stock by hand (new goods arrived, damaged, counted wrong).
+Every change is saved as a stock movement and in the audit log.
+
+| Field | Type | Rule |
+|---|---|---|
+| `change` | integer | pieces to add (`50`) or remove (`-3`); not 0; −1,000,000 to 1,000,000 |
+| `note` | string | required, 1–200 chars ("New stock from Surat") |
+
+→ `200 { "item": Item }` (with the new `stockQty`)
+
+Errors: `400 VALIDATION_FAILED`, `400 INVALID_ID`, `404 ITEM_NOT_FOUND`,
+`409 INSUFFICIENT_STOCK` ("Only 22 left of BC-101." — stock cannot go below 0).
 
 ### `DELETE /api/items/:id` — Firm
 Soft delete. → `204`
@@ -431,9 +447,29 @@ For the printed bill also call `GET /api/businesses/profile` (firm header,
 bank, terms). Amount in words: use the same Indian grouping as
 `src/core/amountInWords.ts`.
 
+### `POST /api/sales/:id/cancel` — Owner
+Cancels a bill. The bill **stays** in the list with `status: "cancelled"`
+and keeps its number (numbers never get reused, no gaps). In one
+transaction: stock goes back for every line, the customer's ledger gets
+a matching credit, and the audit log records who cancelled and why.
+
+| Field | Type | Rule |
+|---|---|---|
+| `reason` | string | required, 1–200 chars ("Wrong party") |
+
+→ `200 { "invoice": Invoice }` (with `status: "cancelled"`, `cancelledAt`,
+`cancelledBy`, `cancelReason`)
+
+Errors: `400 VALIDATION_FAILED`, `400 INVALID_ID`, `403 FORBIDDEN` (staff),
+`404 INVOICE_NOT_FOUND`, `409 ALREADY_CANCELLED`.
+
+**Frontend:** show cancelled bills in the list with a "CANCELLED" badge and
+leave them out of "Sales today". A cancelled bill still prints, with a
+large "CANCELLED" mark. Ask for the reason in an in-page dialog first.
+
 ---
 
 ## 8. Not built yet (do not call)
 
-Purchase bills · cancel bill · payments and ledger screen · GST summary ·
+Purchase bills · payments and ledger screen · GST summary ·
 credit / debit notes · staff users.

@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { CircleAlert, Plus, Search, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PrimaryAction } from "@/components/shell/list-actions";
 import { GuardedLink } from "@/components/shell/navigation-guard";
-import { Card, PageHeader, btnOutline, btnPrimary, inputCls } from "@/components/ui/kit";
-import { Input } from "@/components/ui/input";
+import { Card, PageHeader, btnOutline, btnPrimary } from "@/components/ui/kit";
+import { ListError, ListMessage, ListPlaceholder, ListSearch } from "@/components/ui/list-states";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useFirmId } from "@/hooks/use-firm-id";
-import { errorMessage } from "@/lib/api/client";
 import { SALES_LIMIT, listSales } from "@/lib/api/sales";
 import { formatDate, formatRupees, todayIso } from "@/lib/money";
 import { keys } from "@/lib/query";
@@ -76,7 +75,7 @@ function Amount({ sale, className }: { sale: SaleRow; className?: string }) {
 function CancelledLabel() {
   return (
     <span className="inline-flex items-center rounded-md border border-destructive/30 bg-destructive/5 px-2 text-sm font-semibold text-destructive">
-      Cancelled
+      CANCELLED
     </span>
   );
 }
@@ -148,41 +147,6 @@ function BillCards({ sales }: { sales: SaleRow[] }) {
   );
 }
 
-function Placeholder() {
-  return (
-    <div role="status" aria-label="Loading bills">
-      <Card className="hidden p-0 sm:block sm:p-0">
-        <div className="h-12 border-b border-border bg-muted/60" />
-        {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="flex items-center gap-6 border-b border-border px-6 py-4 last:border-b-0">
-            <span className="h-5 w-24 animate-pulse rounded-md bg-muted" />
-            <span className="h-5 w-24 animate-pulse rounded-md bg-muted" />
-            <span className="h-5 flex-1 animate-pulse rounded-md bg-muted" />
-            <span className="h-5 w-24 animate-pulse rounded-md bg-muted" />
-            <span className="h-12 w-32 animate-pulse rounded-lg bg-muted" />
-          </div>
-        ))}
-      </Card>
-      <ul className="grid gap-3 sm:hidden">
-        {Array.from({ length: 4 }, (_, i) => (
-          <li key={i} className="h-28 animate-pulse rounded-xl border border-border bg-card" />
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Message({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Card className="flex flex-col items-start gap-4">
-      <div>
-        <p className="text-xl font-bold">{title}</p>
-      </div>
-      {children}
-    </Card>
-  );
-}
-
 export function BillsList() {
   const [text, setText] = useState("");
   const search = useDebouncedValue(text.trim(), 300);
@@ -191,37 +155,27 @@ export function BillsList() {
 
   let body: React.ReactNode;
   if (isError && !data) {
-    body = (
-      <Card className="flex flex-col items-start gap-4 border-destructive/30" role="alert">
-        <p className="flex items-start gap-3 text-lg font-medium text-destructive">
-          <CircleAlert className="mt-1 size-5 shrink-0" aria-hidden />
-          Bills could not be loaded. {errorMessage(error)}
-        </p>
-        <button type="button" className={btnOutline} onClick={() => refetch()}>
-          Try again
-        </button>
-      </Card>
-    );
+    body = <ListError what="Bills" error={error} onRetry={() => refetch()} />;
   } else if (isPending || !data) {
-    body = <Placeholder />;
+    body = <ListPlaceholder label="Loading bills" columns={["w-24", "w-24", "flex-1", "w-24", "h-12 w-32"]} />;
   } else if (data.length === 0 && search) {
     body = (
-      <Message title={`No bill matches “${search}”`}>
+      <ListMessage title={`No bill matches “${search}”`}>
         <p className="text-muted-foreground">Search by customer name or bill number, like 12/2026-27.</p>
         <button type="button" className={btnOutline} onClick={() => setText("")}>
           Clear search
         </button>
-      </Message>
+      </ListMessage>
     );
   } else if (data.length === 0) {
     body = (
-      <Message title="No bills yet">
+      <ListMessage title="No bills yet">
         <p className="text-muted-foreground">Bills you make will be listed here, newest first.</p>
         <GuardedLink href="/bills/new" className={btnPrimary}>
           <Plus className="size-5" aria-hidden />
           Make your first bill
         </GuardedLink>
-      </Message>
+      </ListMessage>
     );
   } else {
     body = (
@@ -243,34 +197,14 @@ export function BillsList() {
 
       <Today />
 
-      <search className="relative mt-6 block">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <Input
-          type="search"
+      <div className="mt-6">
+        <ListSearch
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setText("");
-          }}
-          maxLength={100}
-          aria-label="Search bills"
+          onChange={setText}
+          label="Search bills"
           placeholder="Search customer name or bill number"
-          className={cn(inputCls, "pr-12 pl-12 [&::-webkit-search-cancel-button]:hidden")}
         />
-        {text && (
-          <button
-            type="button"
-            onClick={() => setText("")}
-            aria-label="Clear search"
-            className="absolute top-1/2 right-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-5" aria-hidden />
-          </button>
-        )}
-      </search>
+      </div>
       <p className="sr-only" role="status">
         {typing || (isFetching && isPlaceholderData) ? "Searching" : data ? `${data.length} bills shown` : ""}
       </p>

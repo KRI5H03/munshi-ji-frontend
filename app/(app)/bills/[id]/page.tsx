@@ -1,8 +1,19 @@
-import { NotBuiltYet } from "@/components/shell/not-built-yet";
+import { Suspense } from "react";
+import { BillView, BillViewPlaceholder } from "@/components/bills/print/bill-view";
+import { BackLink } from "@/components/shell/back-link";
 
 export const metadata = { title: "Bill — Munshi Ji" };
 
-// Opening a bill shows it ready to print. That screen is built last.
+// "Open / Print" on the bills list, and where a new bill lands after saving.
 export default function BillPage() {
-  return <NotBuiltYet title="Open / Print bill" mockup="print" back={{ href: "/bills", to: "bills" }} />;
+  return (
+    <>
+      <div className="no-print mb-3">
+        <BackLink href="/bills" to="bills" />
+      </div>
+      <Suspense fallback={<BillViewPlaceholder />}>
+        <BillView />
+      </Suspense>
+    </>
+  );
 }

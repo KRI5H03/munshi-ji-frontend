@@ -1,8 +1,15 @@
-import { NotBuiltYet } from "@/components/shell/not-built-yet";
+import { NewItem } from "@/components/items/item-screens";
+import { BackLink } from "@/components/shell/back-link";
+import { PageHeader } from "@/components/ui/kit";
 
 export const metadata = { title: "Add item — Munshi Ji" };
 
 // After saving: back to /items with a "Saved" toast.
-export default function Page() {
-  return <NotBuiltYet title="Add item" mockup="items" back={{ href: "/items", to: "items" }} />;
+export default function NewItemPage() {
+  return (
+    <>
+      <PageHeader title="Add item" back={<BackLink href="/items" to="items" />} />
+      <NewItem />
+    </>
+  );
 }

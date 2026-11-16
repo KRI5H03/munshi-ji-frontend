@@ -1,7 +1,7 @@
-import { NotBuiltYet } from "@/components/shell/not-built-yet";
+import { FirmSettings } from "@/components/settings/firm-settings";
 
 export const metadata = { title: "Firm settings — Munshi Ji" };
 
-export default function Page() {
-  return <NotBuiltYet title="Firm settings" mockup="settings" />;
+export default function SettingsPage() {
+  return <FirmSettings />;
 }
