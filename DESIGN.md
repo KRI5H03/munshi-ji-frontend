@@ -1,38 +1,37 @@
-# Munshi Ji — design options (round 1)
+# Munshi Ji — design
 
-Open http://localhost:3000/design. Each direction has all 7 screens with mock data shaped like `docs/API.md`. To choose one, write `BUILD A`, `BUILD B` or `BUILD C`.
+Direction A ("Refined reference") was chosen. Directions B and C are deleted; they remain in git history on the `design-options` branch.
 
-## A — Refined reference
+## Direction A
 
-- **Idea:** the reference screens, tidied. Sidebar on desktop, bottom bar on phone, white cards, a side form next to each list.
+- **Idea:** the reference screens, tidied. Sidebar on desktop, bottom bar on phone, white cards.
 - **Colours:** indigo `#3730A3` on `#F7F7F7`, white cards, grey borders, red only for errors and delete.
 - **Font:** Inter, 16px base, tabular digits for money.
 - **Spacing:** roomy. 48px fields and buttons, 12px corners, 24px between cards.
-- **Best at:** feeling familiar and calm; nothing to learn if you liked the reference.
-- **Gives up:** speed and density. A bill needs scrolling on a small laptop.
 
-## B — Counter mode
+## Changes asked for with BUILD A
 
-- **Idea:** everything for a bill on one screen, driven from the keyboard like Busy or Tally. Ruled entry grid, totals docked on the right, a key bar along the bottom, lists and forms side by side.
-- **Colours:** black on white, yellow `#FDE047` fill on the focused field and the selected row, dark green `#14532D` for the one main action.
-- **Font:** IBM Plex Sans, with IBM Plex Mono for every number. 16px base.
-- **Spacing:** tight. 44px rows, square corners, 1px rules, no cards and no shadows.
-- **Best at:** speed for a trained hand; most information per screen.
-- **Gives up:** calm and first-day friendliness. It looks like accounting software, and on a phone much of the keyboard advantage is lost.
+### 1. Section tabs
 
-## C — The bill is the screen
+Each sidebar section can have a small second-level menu, shown as tabs at the top of its pages:
+Bills → All bills, New bill. Customers → All customers, Add customer. Items → All items, Add item.
 
-- **Idea:** New bill looks like the paper bill and is filled in where it will print: firm, bill to, items, discount, total, amount in words. One job per screen; the new-bill screen hides the tabs and pins "Save and print" to the bottom.
-- **Colours:** warm paper white `#FAFAF7`, near-black ink, one bahi-khata red `#B42318` kept for the main action and the grand total.
-- **Font:** Atkinson Hyperlegible Next (made for low vision), Atkinson Hyperlegible Mono for numbers. 18px base.
-- **Spacing:** large. 56px fields and buttons, single column, full sentences as hints.
-- **Best at:** clarity for a non-technical user, and phone use.
-- **Gives up:** density. Lists show fewer rows, and add/edit forms take the whole width.
+The whole menu is one list in `components/shell/nav.ts`. Adding Purchases, Payments or Reports means adding one entry there and creating its routes. The sidebar scrolls if it grows. The phone bar shows the first four sections; a "More" button holds the rest and Log out.
+
+### 2. Printed bill follows the Busy layout
+
+`components/design/a/print-sheet.tsx`, one A4 page per copy (Original Copy, Duplicate Copy, Triplicate Copy):
+GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and transport columns, Billed to and Shipped to with PAN, mobile, Aadhaar and GSTIN/UIN, the items box (S.N., Description of Goods, HSN/SAC, D. No., Qty., Unit, Price, Amount) with the discount, tax and round-off lines inside it, Grand Total with total pieces, tax summary by rate, amount in words, bank details on one row, then terms from "E.& O.E.", Receiver's Signature and "For FIRM".
 
 ## Things that are not in the API (my calls)
 
 - Firm picker shows name and role only. Login does not return a GSTIN.
+- The firm list is only returned by login, so it is kept in the browser with the token.
+- "Party Aadhaar No" prints blank. The API returns the Aadhaar number only in encrypted form.
+- When no ship-to party is saved, "Shipped to" repeats the billed-to party, as Busy does.
 - "Next bill number" from the reference is dropped. No route gives it.
 - "Low stock" is a frontend-only rule: 10 or fewer.
-- In C, "Save and print" is the main button and Delete customer sits inside Edit.
-- The dark strip at the top of each screen is a review aid, not part of any design.
+
+## Build progress
+
+Built for real: login and firm picker, app shell. Still mock-ups under `/design`: bills, new bill, customers, items, firm settings, print.
