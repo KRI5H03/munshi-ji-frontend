@@ -3,8 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { btnOutline, btn } from "@/components/ui/kit";
-import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 /**
  * Stops you leaving a form with unsaved changes by accident.
@@ -54,10 +53,13 @@ export function NavigationGuardProvider({ children }: { children: React.ReactNod
   return (
     <GuardContext.Provider value={guard}>
       {children}
-      <DiscardDialog
+      <ConfirmDialog
         open={pending !== null}
+        title="Discard changes?"
+        keepLabel="Keep editing"
+        confirmLabel="Discard changes"
         onKeep={() => setPending(null)}
-        onDiscard={() => {
+        onConfirm={() => {
           const leave = pending;
           const onDiscard = discardHandler.current;
           blocked.current = false;
@@ -66,58 +68,10 @@ export function NavigationGuardProvider({ children }: { children: React.ReactNod
           onDiscard?.();
           leave?.();
         }}
-      />
+      >
+        What you entered on this page has not been saved and will be lost.
+      </ConfirmDialog>
     </GuardContext.Provider>
-  );
-}
-
-function DiscardDialog({ open, onKeep, onDiscard }: { open: boolean; onKeep: () => void; onDiscard: () => void }) {
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
-
-  return (
-    <dialog
-      ref={ref}
-      aria-labelledby="discard-title"
-      aria-describedby="discard-text"
-      // Esc closes the dialog: treat it as "Keep editing".
-      onCancel={(event) => {
-        event.preventDefault();
-        onKeep();
-      }}
-      onClick={(event) => {
-        // A click on the dimmed area outside the box also keeps editing.
-        if (event.target === event.currentTarget) onKeep();
-      }}
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-black/40"
-    >
-      <div className="p-6">
-        <h2 id="discard-title" className="text-2xl font-bold tracking-tight">
-          Discard changes?
-        </h2>
-        <p id="discard-text" className="mt-2 text-lg text-muted-foreground">
-          What you entered on this page has not been saved and will be lost.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-end gap-3">
-          <button type="button" autoFocus onClick={onKeep} className={btnOutline}>
-            Keep editing
-          </button>
-          <button
-            type="button"
-            onClick={onDiscard}
-            className={cn(btn, "bg-destructive text-white hover:bg-destructive/90")}
-          >
-            Discard changes
-          </button>
-        </div>
-      </div>
-    </dialog>
   );
 }
 
