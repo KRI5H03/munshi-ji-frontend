@@ -36,7 +36,7 @@ GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and tran
 
 ## Build progress
 
-Built for real: login and firm picker, app shell, bills list, new bill, customers, bill view and print, items. Still a mock-up under `/design`: firm settings.
+All screens are built for real: login and firm picker, app shell, bills list, new bill, bill view and print, customers, items, firm settings. The `/design` mock-ups and their sample data are deleted (they remain in git history).
 
 ### New bill
 
@@ -72,3 +72,10 @@ Built for real: login and firm picker, app shell, bills list, new bill, customer
 - **Adjust stock** (`POST /items/:id/adjust`): a button on every row of the Items list and on Edit item opens an in-page dialog: Add or Remove, pieces, and a required note. It shows "Stock now 10, after saving 60 pcs" while typing, refuses to remove more than is in stock, and after saving the toast and the list show the new stock.
 - **Cancel bill** (`POST /sales/:id/cancel`, owner only): on the bill page, next to Print. The dialog asks for a reason (quick picks: Wrong party, Wrong rate or quantity, Goods returned, Made twice by mistake). Staff do not see the button; the server refuses them too. After cancelling, the page says when and why, the list shows a CANCELLED badge with the amount struck through, and the bill is left out of Bills today and Sales today. Stock comes back for every line.
 - Form dialogs (`components/ui/form-dialog.tsx`) open at the end of the page, so a dialog opened from inside a form (Adjust stock on Edit item) never submits that form.
+
+### Firm settings
+
+- `/settings`: firm (name, shop and branch address, phone, PAN, MSME Udyam no., jurisdiction), bank details, and the terms printed on the bill. GSTIN and state are shown locked. A live "On the bill" preview shows the top of a printed copy as you type.
+- Only the owner can save (`PATCH /businesses/profile`); staff see every detail locked with "Only the owner can change these details", and no Save button.
+- Save sends only what changed, says "Saved", and new and printed bills use the new details at once.
+- Plain text fields can be emptied. Phone, PAN, account no. and IFSC cannot once saved (the API checks their format), and the form says so.
