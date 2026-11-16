@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { AdjustStockButton } from "@/components/items/adjust-stock";
 import { StockText } from "@/components/items/stock-badge";
 import { useUnsavedChanges } from "@/components/shell/navigation-guard";
 import { Card, Field, btnPrimary } from "@/components/ui/kit";
@@ -149,10 +150,11 @@ export function ItemForm({
         {saved ? (
           <div>
             <p className="mb-2 font-medium">In stock</p>
-            <p className="flex h-12 items-center text-lg">
+            <div className="flex min-h-12 flex-wrap items-center gap-4 text-lg">
               <StockText qty={saved.stockQty} unit={saved.unit} />
-            </p>
-            <p className="mt-2 text-muted-foreground">Stock changes only through bills.</p>
+              <AdjustStockButton firmId={firmId} item={saved} className="h-11" />
+            </div>
+            <p className="mt-2 text-muted-foreground">Bills move stock by themselves. Adjust it here for new goods or damage.</p>
           </div>
         ) : (
           <Field

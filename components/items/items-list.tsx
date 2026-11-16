@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { AdjustStockButton } from "@/components/items/adjust-stock";
 import { StockText } from "@/components/items/stock-badge";
 import { PrimaryAction } from "@/components/shell/list-actions";
 import { GuardedLink } from "@/components/shell/navigation-guard";
@@ -15,7 +16,7 @@ import { keys } from "@/lib/query";
 import type { Item } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function ItemsTable({ items }: { items: Item[] }) {
+function ItemsTable({ firmId, items }: { firmId: string; items: Item[] }) {
   return (
     <Card className="hidden overflow-hidden p-0 sm:block sm:p-0">
       <table className="w-full text-left">
@@ -26,7 +27,7 @@ function ItemsTable({ items }: { items: Item[] }) {
             <th className="px-4 py-3 font-semibold">HSN</th>
             <th className="px-4 py-3 text-right font-semibold">In stock</th>
             <th className="px-6 py-3">
-              <span className="sr-only">Edit</span>
+              <span className="sr-only">Actions</span>
             </th>
           </tr>
         </thead>
@@ -39,14 +40,17 @@ function ItemsTable({ items }: { items: Item[] }) {
               <td className="px-4 py-3 text-right text-lg">
                 <StockText qty={i.stockQty} unit={i.unit} />
               </td>
-              <td className="px-6 py-3 text-right">
-                <GuardedLink
-                  href={`/items/${i.id}`}
-                  className={btnOutline}
-                  aria-label={`Edit ${i.description}, ${i.designNo}`}
-                >
-                  Edit
-                </GuardedLink>
+              <td className="px-6 py-3">
+                <span className="flex justify-end gap-2">
+                  <AdjustStockButton firmId={firmId} item={i} />
+                  <GuardedLink
+                    href={`/items/${i.id}`}
+                    className={btnOutline}
+                    aria-label={`Edit ${i.description}, ${i.designNo}`}
+                  >
+                    Edit
+                  </GuardedLink>
+                </span>
               </td>
             </tr>
           ))}
@@ -56,15 +60,15 @@ function ItemsTable({ items }: { items: Item[] }) {
   );
 }
 
-function ItemCards({ items }: { items: Item[] }) {
+function ItemCards({ firmId, items }: { firmId: string; items: Item[] }) {
   return (
     <ul className="grid gap-3 sm:hidden">
       {items.map((i) => (
-        <li key={i.id}>
+        <li key={i.id} className="rounded-xl border border-border bg-card">
           <GuardedLink
             href={`/items/${i.id}`}
             aria-label={`Edit ${i.description}, ${i.designNo}`}
-            className="block rounded-xl border border-border bg-card p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="block rounded-t-xl p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <span className="flex items-baseline justify-between gap-3">
               <span className="text-lg font-bold">{i.description}</span>
@@ -74,6 +78,9 @@ function ItemCards({ items }: { items: Item[] }) {
               {i.designNo}, HSN {i.hsnCode}
             </span>
           </GuardedLink>
+          <div className="border-t border-border px-4 py-3">
+            <AdjustStockButton firmId={firmId} item={i} className="h-11 w-full" />
+          </div>
         </li>
       ))}
     </ul>
@@ -118,8 +125,8 @@ export function ItemsList() {
   } else {
     body = (
       <div className={cn("transition-opacity duration-150", isPlaceholderData && "opacity-60")}>
-        <ItemsTable items={data} />
-        <ItemCards items={data} />
+        <ItemsTable firmId={firmId ?? ""} items={data} />
+        <ItemCards firmId={firmId ?? ""} items={data} />
         {data.length >= ITEMS_LIMIT && (
           <p className="mt-4 text-muted-foreground">Showing the first {ITEMS_LIMIT}, A to Z. Search to find others.</p>
         )}
