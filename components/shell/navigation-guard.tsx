@@ -18,7 +18,8 @@ type Guard = {
   confirmLeave: (leave: () => void) => void;
   /** Whether a form on the page has unsaved changes. */
   isBlocked: () => boolean;
-  setBlocked: (blocked: boolean) => void;
+  /** `onDiscard` runs if the person chooses "Discard changes". */
+  setBlocked: (blocked: boolean, onDiscard?: () => void) => void;
 };
 
 const GuardContext = createContext<Guard | null>(null);
@@ -32,6 +33,7 @@ function useGuard(): Guard {
 export function NavigationGuardProvider({ children }: { children: React.ReactNode }) {
   // A ref, not state: links read it when clicked, and typing must not re-render the shell.
   const blocked = useRef(false);
+  const discardHandler = useRef<(() => void) | undefined>(undefined);
   const [pending, setPending] = useState<(() => void) | null>(null);
 
   const guard = useMemo<Guard>(
@@ -41,8 +43,9 @@ export function NavigationGuardProvider({ children }: { children: React.ReactNod
         else leave();
       },
       isBlocked: () => blocked.current,
-      setBlocked: (value) => {
+      setBlocked: (value, onDiscard) => {
         blocked.current = value;
+        discardHandler.current = value ? onDiscard : undefined;
       },
     }),
     [],
@@ -56,8 +59,11 @@ export function NavigationGuardProvider({ children }: { children: React.ReactNod
         onKeep={() => setPending(null)}
         onDiscard={() => {
           const leave = pending;
+          const onDiscard = discardHandler.current;
           blocked.current = false;
+          discardHandler.current = undefined;
           setPending(null);
+          onDiscard?.();
           leave?.();
         }}
       />
@@ -115,12 +121,19 @@ function DiscardDialog({ open, onKeep, onDiscard }: { open: boolean; onKeep: () 
   );
 }
 
-/** Call in a form with its dirty state. Cleared when the form goes away. */
-export function useUnsavedChanges(isDirty: boolean) {
+/**
+ * Call in a form with its dirty state. Cleared when the form goes away or is hidden.
+ * `onDiscard` runs when the person agrees to throw the changes away, so the form can start fresh.
+ */
+export function useUnsavedChanges(isDirty: boolean, onDiscard?: () => void) {
   const { setBlocked } = useGuard();
+  const discard = useRef(onDiscard);
+  useEffect(() => {
+    discard.current = onDiscard;
+  });
 
   useEffect(() => {
-    setBlocked(isDirty);
+    setBlocked(isDirty, () => discard.current?.());
     if (!isDirty) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", onBeforeUnload);
