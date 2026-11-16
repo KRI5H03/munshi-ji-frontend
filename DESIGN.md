@@ -58,11 +58,17 @@ Built for real: login and firm picker, app shell, bills list, new bill, customer
 - `/bills/[id]` ("Open / Print", and where a new bill lands after saving) loads `GET /sales/:id` and the firm profile, and shows the three copies as A4 sheets. Print (focused on arrival, so Enter prints) or Ctrl+P prints them as three pages. The page title becomes the PDF file name, like "Bill 1-2026-27".
 - Every figure on the sheet is the saved bill's; nothing is worked out again.
 - A long bill grows onto a second page per copy instead of being cut. The second page does not repeat the column headings yet.
-- A cancelled bill prints CANCELLED under TAX INVOICE (the API cannot cancel bills yet).
+- A cancelled bill prints with a large grey CANCELLED mark across every copy, and CANCELLED under TAX INVOICE.
 
 ### Items
 
 - List at `/items` (search by name or design no.), Add at `/items/new`, Edit at `/items/[id]`, Delete at the bottom of Edit behind "Delete NAME (DESIGN NO.)?", which also says how much stock is left.
-- Opening stock is asked only on Add. Edit shows the stock read-only: it changes only through bills (the API ignores stock on edit).
+- Opening stock is asked only on Add. Edit shows the stock read-only (the API ignores stock on edit); bills move it, and "Adjust stock" changes it by hand.
 - Design no. must be unique in the firm, whatever the capital letters; a repeat says "Design no. BC-101 is already used by another item".
 - Stock of 10 or fewer is marked Low, 0 is Out of stock (frontend rule, shared with New bill in `lib/stock.ts`).
+
+### Adjust stock and cancel bill
+
+- **Adjust stock** (`POST /items/:id/adjust`): a button on every row of the Items list and on Edit item opens an in-page dialog: Add or Remove, pieces, and a required note. It shows "Stock now 10, after saving 60 pcs" while typing, refuses to remove more than is in stock, and after saving the toast and the list show the new stock.
+- **Cancel bill** (`POST /sales/:id/cancel`, owner only): on the bill page, next to Print. The dialog asks for a reason (quick picks: Wrong party, Wrong rate or quantity, Goods returned, Made twice by mistake). Staff do not see the button; the server refuses them too. After cancelling, the page says when and why, the list shows a CANCELLED badge with the amount struck through, and the bill is left out of Bills today and Sales today. Stock comes back for every line.
+- Form dialogs (`components/ui/form-dialog.tsx`) open at the end of the page, so a dialog opened from inside a form (Adjust stock on Edit item) never submits that form.
