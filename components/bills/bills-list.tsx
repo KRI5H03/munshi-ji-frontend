@@ -75,7 +75,7 @@ function Amount({ sale, className }: { sale: SaleRow; className?: string }) {
 function CancelledLabel() {
   return (
     <span className="inline-flex items-center rounded-md border border-destructive/30 bg-destructive/5 px-2 text-sm font-semibold text-destructive">
-      Cancelled
+      CANCELLED
     </span>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { CircleAlert, Printer } from "lucide-react";
+import { CancelBillButton } from "@/components/bills/print/cancel-bill";
 import { PrintSheet } from "@/components/bills/print/print-sheet";
 import { Card, btnOutline, btnPrimary } from "@/components/ui/kit";
 import { ListError } from "@/components/ui/list-states";
@@ -15,6 +16,7 @@ import { getSale } from "@/lib/api/sales";
 import { formatDate, formatRupees } from "@/lib/money";
 import { COPIES } from "@/lib/print";
 import { keys } from "@/lib/query";
+import { currentBusiness, useSession } from "@/lib/session";
 
 export function BillViewPlaceholder() {
   return (
@@ -27,7 +29,14 @@ export function BillViewPlaceholder() {
   );
 }
 
+/** When it was cancelled, in the person's own time zone. */
+function cancelledOn(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
 function BillViewLoaded({ firmId, id }: { firmId: string; id: string }) {
+  const isOwner = currentBusiness(useSession())?.role === "owner";
   const sale = useQuery({ queryKey: keys.sale(firmId, id), queryFn: ({ signal }) => getSale(id, signal) });
   const firm = useQuery({
     queryKey: keys.profile(firmId),
@@ -84,10 +93,13 @@ function BillViewLoaded({ firmId, id }: { firmId: string; id: string }) {
             {invoice.billedToName}, {formatDate(invoice.date)}, <span className="num">{formatRupees(invoice.grandTotal)}</span>
           </p>
         </div>
-        <button type="button" autoFocus onClick={() => window.print()} className={btnPrimary}>
-          <Printer className="size-5" aria-hidden />
-          Print
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {isOwner && !cancelled && <CancelBillButton firmId={firmId} invoice={invoice} />}
+          <button type="button" autoFocus onClick={() => window.print()} className={btnPrimary}>
+            <Printer className="size-5" aria-hidden />
+            Print
+          </button>
+        </div>
       </div>
 
       {cancelled && (
@@ -96,7 +108,11 @@ function BillViewLoaded({ firmId, id }: { firmId: string; id: string }) {
           className="no-print mb-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 font-medium text-destructive"
         >
           <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
-          This bill is cancelled. It prints with CANCELLED on every copy.
+          <span>
+            Cancelled on {cancelledOn(invoice.cancelledAt)}
+            {invoice.cancelReason ? `. Reason: ${invoice.cancelReason}` : ""}. It prints with a large CANCELLED mark
+            on every copy, and is not counted in today’s sales.
+          </span>
         </p>
       )}
 

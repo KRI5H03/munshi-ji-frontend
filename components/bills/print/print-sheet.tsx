@@ -99,7 +99,15 @@ export function PrintSheet({ firm, sale, copy }: { firm: Business; sale: SaleDet
   ];
 
   return (
-    <article className="sheet num text-[9.5pt] leading-[1.35]">
+    <article className="sheet num relative text-[9.5pt] leading-[1.35]">
+      {invoice.status === "cancelled" && (
+        // A large mark across the copy, like a stamp on a paper bill. Grey ink so the figures stay readable.
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+          <span className="-rotate-[28deg] border-[2.5mm] border-black/30 px-[8mm] py-[2mm] text-[64pt] leading-none font-bold tracking-[0.12em] text-black/30">
+            CANCELLED
+          </span>
+        </div>
+      )}
       <header>
         <div className="flex justify-between">
           <p>
