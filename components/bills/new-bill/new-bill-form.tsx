@@ -33,11 +33,10 @@ import {
   type BillFormValues,
 } from "@/lib/schemas/sale";
 import { stateName } from "@/lib/states";
+import { stockLevel } from "@/lib/stock";
 import type { Business, Contact, Item } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-/** Frontend-only rule (not in the API): stock at or below this is called low. */
-const LOW_STOCK_AT = 10;
 const ADD_ITEM_ID = "add-item-search";
 const LINE_COLS = "@2xl:grid-cols-[1.5rem_minmax(0,1fr)_6.5rem_8rem_8rem_3rem]";
 
@@ -53,8 +52,9 @@ function ContactOption({ contact }: { contact: Contact }) {
 }
 
 function ItemOption({ item }: { item: Item }) {
-  const out = item.stockQty <= 0;
-  const low = !out && item.stockQty <= LOW_STOCK_AT;
+  const level = stockLevel(item.stockQty);
+  const out = level === "out";
+  const low = level === "low";
   return (
     <span className="flex items-start justify-between gap-4">
       <span className="min-w-0">
