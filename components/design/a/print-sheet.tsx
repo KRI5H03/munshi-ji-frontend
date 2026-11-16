@@ -1,241 +1,280 @@
 import { amountInWords } from "@/lib/amount-in-words";
-import {
-  formatBp,
-  formatDateNumeric,
-  formatPaise,
-  formatPercentMilli,
-  formatPhone,
-  formatRupees,
-  formatSigned,
-} from "@/lib/money";
+import { formatBp, formatDateNumeric, formatPaise, formatPercentMilli, formatPhone } from "@/lib/money";
+import { formatQty, formatUnit, groupTaxByRate, totalQuantity } from "@/lib/print";
 import { stateName } from "@/lib/states";
-import type { Business, SaleDetail } from "@/lib/types";
+import type { Business, Invoice, SaleDetail } from "@/lib/types";
 
-const cell = "border border-black px-2 py-1.5";
-const th = `${cell} font-bold`;
+type Party = {
+  name: string | null;
+  address: string | null;
+  pan: string | null;
+  phone: string | null;
+  gstin: string | null;
+};
 
-/** Direction A: the reference bill. Separate boxes, firm on the left, bill details on the right. */
-export function PrintSheetA({
-  firm,
-  sale,
-  copy,
-  page,
-  pages,
-}: {
-  firm: Business;
-  sale: SaleDetail;
-  copy: string;
-  page: number;
-  pages: number;
-}) {
+/** Label, colon, value: the colons line up down the column as on a Busy bill. */
+function Rows({ rows, labelWidth }: { rows: [string, string | null][]; labelWidth: string }) {
+  return (
+    <dl className="grid gap-x-2" style={{ gridTemplateColumns: `${labelWidth} auto 1fr` }}>
+      {rows.map(([label, value]) => (
+        <div key={label} className="contents">
+          <dt>{label}</dt>
+          <span aria-hidden>:</span>
+          <dd className="font-bold">{value ?? ""}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function PartyBox({ title, party }: { title: string; party: Party }) {
+  return (
+    <div className="p-[2mm]">
+      <p className="italic">{title} :</p>
+      <p className="text-[11pt] font-bold">{party.name ?? ""}</p>
+      <p className="min-h-[2.8em]">{party.address ?? ""}</p>
+      <Rows
+        labelWidth="31mm"
+        rows={[
+          ["Party PAN", party.pan],
+          ["Party Mobile No", party.phone ? formatPhone(party.phone) : null],
+          // The API returns the Aadhaar number only in encrypted form, so it cannot be printed yet.
+          ["Party Aadhaar No", null],
+          ["GSTIN / UIN", party.gstin],
+        ]}
+      />
+    </div>
+  );
+}
+
+function shippedTo(invoice: Invoice): Party {
+  // Busy repeats the billed-to party when goods go to the same place.
+  if (!invoice.shippedToContactId) return billedTo(invoice);
+  return {
+    name: invoice.shippedToName,
+    address: invoice.shippedToAddress,
+    pan: invoice.shippedToPan,
+    phone: invoice.shippedToPhone,
+    gstin: invoice.shippedToGstin,
+  };
+}
+
+function billedTo(invoice: Invoice): Party {
+  return {
+    name: invoice.billedToName,
+    address: invoice.billedToAddress,
+    pan: invoice.billedToPan,
+    phone: invoice.billedToPhone,
+    gstin: invoice.billedToGstin,
+  };
+}
+
+const COLS = ["9mm", "auto", "21mm", "19mm", "18mm", "13mm", "22mm", "27mm"];
+const HEADS = ["S.N.", "Description of Goods", "HSN/SAC", "D. No.", "Qty.", "Unit", "Price", "Amount"];
+const RIGHT = new Set([4, 6, 7]);
+/** The printed tax invoice, laid out like the firm's Busy bills. One of these per copy. */
+export function PrintSheetA({ firm, sale, copy }: { firm: Business; sale: SaleDetail; copy: string }) {
   const { invoice, lines, taxSummary } = sale;
-  const sameState = invoice.igst === 0;
+  const interState = invoice.igst !== 0;
+  const rates = groupTaxByRate(taxSummary);
+  const col = "border-r border-black px-[1.5mm] last:border-r-0";
+
+  const adjustments: [string, string][] = [
+    ...invoice.discounts.map((d): [string, string] => [
+      `Less : Discount @ ${formatPercentMilli(d.percentMilli)}`,
+      formatPaise(d.amount),
+    ]),
+    ...rates.flatMap((r): [string, string][] =>
+      interState
+        ? [[`Add : IGST @ ${formatBp(r.gstRateBp)}`, formatPaise(r.igst)]]
+        : [
+            [`Add : CGST @ ${formatBp(r.gstRateBp / 2)}`, formatPaise(r.cgst)],
+            [`Add : SGST @ ${formatBp(r.gstRateBp / 2)}`, formatPaise(r.sgst)],
+          ],
+    ),
+    [`Add : Rounded Off (${invoice.roundOff < 0 ? "-" : "+"})`, formatPaise(Math.abs(invoice.roundOff))],
+  ];
 
   return (
-    <article className="sheet">
-      <header className="flex items-center justify-between border-b-2 border-black pb-2">
-        <h1 className="text-[15pt] font-bold tracking-wide">TAX INVOICE</h1>
-        <p className="border-2 border-black px-3 py-1 text-[9.5pt] font-bold uppercase">{copy}</p>
+    <article className="sheet num text-[9.5pt] leading-[1.35]">
+      <header>
+        <div className="flex justify-between">
+          <p>
+            GSTIN : <b>{firm.gstin}</b>
+          </p>
+          <p className="font-bold">{copy}</p>
+        </div>
+        <div className="mt-[1mm] text-center">
+          <p className="font-bold underline underline-offset-2">TAX INVOICE</p>
+          <h1 className="mt-[1mm] text-[20pt] leading-tight font-bold">{firm.name}</h1>
+          {firm.msmeUdhyamNo && <p>MSME Udyam No. : {firm.msmeUdhyamNo}</p>}
+          <p>{firm.address}</p>
+          {firm.branchAddress && <p>Branch : {firm.branchAddress}</p>}
+          {firm.phone && <p>Phone : {formatPhone(firm.phone)}</p>}
+        </div>
       </header>
 
-      <div className="mt-4 flex justify-between gap-6">
-        <div>
-          <p className="text-[19pt] leading-tight font-bold">{firm.name}</p>
-          <p className="mt-1">{firm.address}</p>
-          <p>
-            GSTIN: <b>{firm.gstin}</b>, State code: {firm.stateCode}
-          </p>
-          {firm.phone && <p>Phone: {formatPhone(firm.phone)}</p>}
+      <div className="mt-[2mm] flex flex-1 flex-col border border-black">
+        <div className="grid grid-cols-2 border-b border-black">
+          <div className="border-r border-black p-[2mm]">
+            <Rows
+              labelWidth="31mm"
+              rows={[
+                ["Invoice No.", invoice.invoiceNo],
+                ["Dated", formatDateNumeric(invoice.date)],
+                ["Place of Supply", `${stateName(invoice.placeOfSupply)} (${invoice.placeOfSupply})`],
+                ["Reverse Charge", invoice.reverseCharge ? "Y" : "N"],
+              ]}
+            />
+          </div>
+          <div className="p-[2mm]">
+            <Rows
+              labelWidth="24mm"
+              rows={[
+                ["GR/RR No.", invoice.grRrNo],
+                ["Transport", invoice.transport],
+                ["Vehicle No.", invoice.vehicleNo],
+                ["Station", invoice.station],
+              ]}
+            />
+          </div>
         </div>
-        <table className="num w-auto! shrink-0 self-start">
-          <tbody>
-            {[
-              ["Bill no.", invoice.invoiceNo],
-              ["Date", formatDateNumeric(invoice.date)],
-              ["Place of supply", `${invoice.placeOfSupply} ${stateName(invoice.placeOfSupply)}`],
-              ["Reverse charge", invoice.reverseCharge ? "Yes" : "No"],
-            ].map(([k, v]) => (
-              <tr key={k}>
-                <td className="pr-4">{k}</td>
-                <td className="font-bold">{v}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
-      <div className="mt-4 grid grid-cols-2 border border-black">
-        <div className="border-r border-black p-3">
-          <p className="text-[9pt] font-bold">Billed to</p>
-          <p className="text-[12pt] font-bold">{invoice.billedToName}</p>
-          {invoice.billedToAddress && <p>{invoice.billedToAddress}</p>}
-          <p>
-            {invoice.billedToGstin ? `GSTIN: ${invoice.billedToGstin}, ` : ""}State code: {invoice.billedToStateCode}
-          </p>
-          {invoice.billedToPhone && <p>Phone: {formatPhone(invoice.billedToPhone)}</p>}
+        <div className="grid grid-cols-2 border-b border-black">
+          <div className="border-r border-black">
+            <PartyBox title="Billed to" party={billedTo(invoice)} />
+          </div>
+          <PartyBox title="Shipped to" party={shippedTo(invoice)} />
         </div>
-        <div className="p-3">
-          <p className="text-[9pt] font-bold">Shipped to</p>
-          <p>{invoice.shippedToName ?? "Same as billed to"}</p>
-          {invoice.shippedToAddress && <p>{invoice.shippedToAddress}</p>}
-          <p className="mt-2">Transport: {invoice.transport ?? "—"}</p>
-          <p>
-            GR/RR no.: {invoice.grRrNo ?? "—"}, Vehicle: {invoice.vehicleNo ?? "—"}
-          </p>
-        </div>
-      </div>
 
-      <table className="num mt-4">
-        <thead>
-          <tr>
-            <th className={`${th} w-[8mm] text-left`}>Sr</th>
-            <th className={`${th} text-left`}>Description</th>
-            <th className={`${th} text-left`}>Design</th>
-            <th className={`${th} text-left`}>HSN</th>
-            <th className={`${th} text-right`}>Qty</th>
-            <th className={`${th} text-right`}>Rate</th>
-            <th className={`${th} text-right`}>GST</th>
-            <th className={`${th} text-right`}>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((l) => (
-            <tr key={l.id} className="align-top">
-              <td className={`${cell} border-b-0`}>{l.lineNo}</td>
-              <td className={`${cell} border-b-0`}>{l.description}</td>
-              <td className={`${cell} border-b-0`}>{l.designNo}</td>
-              <td className={`${cell} border-b-0`}>{l.hsnCode}</td>
-              <td className={`${cell} border-b-0 text-right whitespace-nowrap`}>
-                {l.qty} {l.unit}
-              </td>
-              <td className={`${cell} border-b-0 text-right`}>{formatPaise(l.rate)}</td>
-              <td className={`${cell} border-b-0 text-right`}>{formatBp(l.gstRateBp)}</td>
-              <td className={`${cell} border-b-0 text-right`}>{formatPaise(l.gross)}</td>
-            </tr>
-          ))}
-          <tr aria-hidden style={{ height: "62mm" }}>
-            {Array.from({ length: 8 }, (_, i) => (
-              <td key={i} className="border border-t-0 border-black" />
-            ))}
-          </tr>
-        </tbody>
-      </table>
-
-      <div className="mt-4 grid grid-cols-[1fr_72mm] items-start gap-4">
-        <div>
-          <table className="num">
+        {/* The empty row stretches, so a short bill still fills the page and the column rules run to the bottom. */}
+        <div className="min-h-0 flex-1">
+          <table className="h-full">
+            <colgroup>
+              {COLS.map((width, i) => (
+                <col key={i} style={{ width }} />
+              ))}
+            </colgroup>
             <thead>
-              <tr>
-                <th className={`${th} text-left`}>HSN</th>
-                <th className={`${th} text-right`}>Taxable</th>
-                {sameState ? (
-                  <>
-                    <th className={`${th} text-right`}>CGST</th>
-                    <th className={`${th} text-right`}>SGST</th>
-                  </>
-                ) : (
-                  <th className={`${th} text-right`}>IGST</th>
-                )}
-                <th className={`${th} text-right`}>Total tax</th>
+              <tr className="border-b border-black">
+                {HEADS.map((head, i) => (
+                  <th key={head} className={`${col} py-[1mm] font-bold ${RIGHT.has(i) ? "text-right" : "text-left"}`}>
+                    {head}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {taxSummary.map((t) => (
-                <tr key={t.id}>
-                  <td className={cell}>{t.hsnCode}</td>
-                  <td className={`${cell} text-right`}>{formatPaise(t.taxable)}</td>
-                  {sameState ? (
-                    <>
-                      <td className={`${cell} text-right`}>
-                        {formatPaise(t.cgst)} <span className="text-[8.5pt]">@{formatBp(t.gstRateBp / 2)}</span>
-                      </td>
-                      <td className={`${cell} text-right`}>
-                        {formatPaise(t.sgst)} <span className="text-[8.5pt]">@{formatBp(t.gstRateBp / 2)}</span>
-                      </td>
-                    </>
-                  ) : (
-                    <td className={`${cell} text-right`}>
-                      {formatPaise(t.igst)} <span className="text-[8.5pt]">@{formatBp(t.gstRateBp)}</span>
-                    </td>
-                  )}
-                  <td className={`${cell} text-right`}>{formatPaise(t.cgst + t.sgst + t.igst)}</td>
+              {lines.map((line) => (
+                <tr key={line.id} className="align-top">
+                  <td className={`${col} pt-[1mm]`}>{line.lineNo}.</td>
+                  <td className={`${col} pt-[1mm] font-bold`}>{line.description}</td>
+                  <td className={`${col} pt-[1mm]`}>{line.hsnCode}</td>
+                  <td className={`${col} pt-[1mm]`}>{line.designNo}</td>
+                  <td className={`${col} pt-[1mm] text-right`}>{formatQty(line.qty)}</td>
+                  <td className={`${col} pt-[1mm]`}>{formatUnit(line.unit)}</td>
+                  <td className={`${col} pt-[1mm] text-right`}>{formatPaise(line.rate)}</td>
+                  <td className={`${col} pt-[1mm] text-right`}>{formatPaise(line.gross)}</td>
                 </tr>
               ))}
+              <tr aria-hidden className="h-full">
+                {COLS.map((_, i) => (
+                  <td key={i} className={col} />
+                ))}
+              </tr>
+              <tr>
+                {COLS.slice(1).map((_, i) => (
+                  <td key={i} className={col} />
+                ))}
+                <td className={`${col} border-t border-black pt-[0.5mm] text-right`}>{formatPaise(invoice.gross)}</td>
+              </tr>
+              {adjustments.map(([label, amount]) => (
+                <tr key={label}>
+                  <td className={col} />
+                  <td className={`${col} text-right whitespace-nowrap italic`}>{label}</td>
+                  {COLS.slice(3).map((_, i) => (
+                    <td key={i} className={col} />
+                  ))}
+                  <td className={`${col} text-right`}>{amount}</td>
+                </tr>
+              ))}
+              <tr aria-hidden className="h-[1.5mm]">
+                {COLS.map((_, i) => (
+                  <td key={i} className={col} />
+                ))}
+              </tr>
+              <tr className="border-t border-black text-[11pt] font-bold">
+                <td className="px-[1.5mm] py-[1mm] text-right" colSpan={4}>
+                  Grand Total
+                </td>
+                <td className="px-[1.5mm] py-[1mm] text-right whitespace-nowrap" colSpan={2}>
+                  {totalQuantity(lines)}
+                </td>
+                <td className="px-[1.5mm] py-[1mm] text-right whitespace-nowrap" colSpan={2}>
+                  ₹ {formatPaise(invoice.grandTotal)}
+                </td>
+              </tr>
             </tbody>
           </table>
-          <p className="mt-3 border border-black p-2">
-            <b>Amount in words:</b> {amountInWords(invoice.grandTotal)}
-          </p>
         </div>
 
-        <table className="num border border-black">
-          <tbody>
-            <tr className="border-b border-neutral-400">
-              <td className="px-3 py-1.5">Gross</td>
-              <td className="px-3 py-1.5 text-right">{formatPaise(invoice.gross)}</td>
+        <table className="border-t border-black">
+          <thead>
+            <tr className="border-b border-black">
+              <th className={`${col} py-[0.5mm] text-left font-bold`}>Tax Rate</th>
+              <th className={`${col} py-[0.5mm] text-right font-bold`}>Taxable Amt.</th>
+              {interState ? (
+                <th className={`${col} py-[0.5mm] text-right font-bold`}>IGST Amt.</th>
+              ) : (
+                <>
+                  <th className={`${col} py-[0.5mm] text-right font-bold`}>CGST Amt.</th>
+                  <th className={`${col} py-[0.5mm] text-right font-bold`}>SGST Amt.</th>
+                </>
+              )}
+              <th className={`${col} py-[0.5mm] text-right font-bold`}>Total Tax</th>
             </tr>
-            {invoice.discounts.map((d) => (
-              <tr key={d.seq} className="border-b border-neutral-400">
-                <td className="px-3 py-1.5">Less: discount {formatPercentMilli(d.percentMilli)}</td>
-                <td className="px-3 py-1.5 text-right">{formatPaise(d.amount)}</td>
+          </thead>
+          <tbody>
+            {rates.map((r) => (
+              <tr key={r.gstRateBp}>
+                <td className={col}>{formatBp(r.gstRateBp)}</td>
+                <td className={`${col} text-right`}>{formatPaise(r.taxable)}</td>
+                {interState ? (
+                  <td className={`${col} text-right`}>{formatPaise(r.igst)}</td>
+                ) : (
+                  <>
+                    <td className={`${col} text-right`}>{formatPaise(r.cgst)}</td>
+                    <td className={`${col} text-right`}>{formatPaise(r.sgst)}</td>
+                  </>
+                )}
+                <td className={`${col} text-right`}>{formatPaise(r.cgst + r.sgst + r.igst)}</td>
               </tr>
             ))}
-            <tr className="border-b border-neutral-400">
-              <td className="px-3 py-1.5">Taxable value</td>
-              <td className="px-3 py-1.5 text-right">{formatPaise(invoice.taxable)}</td>
-            </tr>
-            {sameState ? (
-              <>
-                <tr className="border-b border-neutral-400">
-                  <td className="px-3 py-1.5">CGST</td>
-                  <td className="px-3 py-1.5 text-right">{formatPaise(invoice.cgst)}</td>
-                </tr>
-                <tr className="border-b border-neutral-400">
-                  <td className="px-3 py-1.5">SGST</td>
-                  <td className="px-3 py-1.5 text-right">{formatPaise(invoice.sgst)}</td>
-                </tr>
-              </>
-            ) : (
-              <tr className="border-b border-neutral-400">
-                <td className="px-3 py-1.5">IGST</td>
-                <td className="px-3 py-1.5 text-right">{formatPaise(invoice.igst)}</td>
-              </tr>
-            )}
-            <tr>
-              <td className="px-3 py-1.5">Round off</td>
-              <td className="px-3 py-1.5 text-right">{formatSigned(invoice.roundOff)}</td>
-            </tr>
-            <tr className="border-t-2 border-black text-[12pt] font-bold">
-              <td className="px-3 py-2">Grand total</td>
-              <td className="px-3 py-2 text-right">{formatRupees(invoice.grandTotal)}</td>
-            </tr>
           </tbody>
         </table>
-      </div>
 
-      <footer className="mt-auto pt-6">
-        <div className="grid grid-cols-3 border border-black">
-          <div className="border-r border-black p-3">
-            <p className="font-bold">Bank details</p>
-            <p>
-              {firm.bankName}, {firm.bankBranch}
-            </p>
-            <p className="num">A/c: {firm.bankAccountNo}</p>
-            <p className="num">IFSC: {firm.ifsc}</p>
-          </div>
-          <div className="border-r border-black p-3">
-            <p className="font-bold">Terms</p>
-            <p className="text-[9pt] whitespace-pre-line">{firm.termsText}</p>
-          </div>
-          <div className="flex min-h-[34mm] flex-col justify-between p-3 text-right">
-            <p className="font-bold">For {firm.name}</p>
-            <p>Authorised signatory</p>
-          </div>
-        </div>
-        <p className="mt-2 text-center text-[8.5pt]">
-          Page {page} of {pages}
+        <p className="border-t border-black px-[2mm] py-[1mm] font-bold">{amountInWords(invoice.grandTotal)}</p>
+
+        <p className="flex flex-wrap gap-x-[5mm] border-t border-black px-[2mm] py-[1mm]">
+          <b>Bank Details :</b>
+          <span>{[firm.bankName, firm.bankBranch].filter(Boolean).join(", ")}</span>
+          <span>A/c No. : {firm.bankAccountNo ?? ""}</span>
+          <span>IFSC : {firm.ifsc ?? ""}</span>
         </p>
-      </footer>
+
+        <footer className="grid min-h-[30mm] grid-cols-[1fr_48mm_56mm] border-t border-black">
+          <div className="border-r border-black p-[2mm] text-[8.5pt]">
+            <p className="font-bold underline underline-offset-2">Terms &amp; Conditions</p>
+            <p>E.&amp; O.E.</p>
+            <p className="whitespace-pre-line">{firm.termsText ?? ""}</p>
+          </div>
+          <div className="border-r border-black p-[2mm]">Receiver&apos;s Signature :</div>
+          <div className="flex flex-col justify-between p-[2mm] text-right">
+            <p className="font-bold">For {firm.name}</p>
+            <p>Authorised Signatory</p>
+          </div>
+        </footer>
+      </div>
     </article>
   );
 }

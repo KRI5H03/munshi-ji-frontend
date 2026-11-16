@@ -1,4 +1,5 @@
-// Phase 1 mock data, shaped exactly like docs/API.md. Deleted in Phase 2.
+// Sample data for the design mock-ups, shaped exactly like docs/API.md.
+// Every PAN, phone, bank and transport value here is made up. Deleted with the last mock-up.
 import type {
   Business,
   Contact,
@@ -31,8 +32,8 @@ export const business: Business = {
   address: "General Ganj, Kanpur, Uttar Pradesh 208001",
   phone: "9876501234",
   pan: "AGDPR3745A",
-  msmeUdhyamNo: null,
-  branchAddress: null,
+  msmeUdhyamNo: "UDYAM-UP-00-0000000",
+  branchAddress: "Sample Market, Kanpur, Uttar Pradesh 208001",
   jurisdiction: "Kanpur",
   bankName: "TEST BANK",
   bankAccountNo: "123456789012",
@@ -151,7 +152,7 @@ export const bill: SaleDetail = {
     billedToName: "VISHAL GARMENTS",
     billedToAddress: "Sadar Bazar, Mau, Uttar Pradesh",
     billedToGstin: "09BBPPV6063F1Z1",
-    billedToPan: null,
+    billedToPan: "ABCDE1234F",
     billedToAadhaarEncrypted: null,
     billedToPhone: "9876543210",
     billedToStateCode: "09",
@@ -165,10 +166,10 @@ export const bill: SaleDetail = {
     shippedToStateCode: null,
     placeOfSupply: "09",
     reverseCharge: false,
-    grRrNo: null,
-    transport: null,
-    vehicleNo: null,
-    station: null,
+    grRrNo: "1234",
+    transport: "SAMPLE TRANSPORT CO.",
+    vehicleNo: "UP78AB1234",
+    station: "MAU",
     shippingCost: 0,
     transportType: null,
     discounts: [{ seq: 1, percentMilli: 10000, amount: 85000 }],

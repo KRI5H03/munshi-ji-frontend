@@ -24,8 +24,8 @@ export default function PrintA() {
         </PrintButton>
       </div>
       <div className="sheets">
-        {COPIES.map((copy, i) => (
-          <PrintSheetA key={copy} firm={business} sale={bill} copy={copy} page={i + 1} pages={COPIES.length} />
+        {COPIES.map((copy) => (
+          <PrintSheetA key={copy} firm={business} sale={bill} copy={copy} />
         ))}
       </div>
     </>
