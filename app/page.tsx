@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// Phase 1: the app is only the design options.
+// Bills is home. The app layout sends you to login first if needed.
 export default function Home() {
-  redirect("/design");
+  redirect("/bills");
 }
