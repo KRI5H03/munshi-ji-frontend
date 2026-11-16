@@ -34,4 +34,4 @@ GSTIN and copy name on top, centred TAX INVOICE and firm block, invoice and tran
 
 ## Build progress
 
-Built for real: login and firm picker, app shell. Still mock-ups under `/design`: bills, new bill, customers, items, firm settings, print.
+Built for real: login and firm picker, app shell, bills list. Still mock-ups under `/design`: new bill, customers, items, firm settings, print.
