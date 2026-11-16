@@ -1,0 +1,133 @@
+/* Phase 1 only: one theme per design direction, scoped to its wrapper. */
+
+.theme-a {
+  --app-font-sans: var(--font-inter), system-ui, sans-serif;
+  --background: #f7f7f7;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --primary: #3730a3;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #18181b;
+  --muted: #f1f1f3;
+  --muted-foreground: #52525b;
+  --accent: #eef0ff;
+  --accent-foreground: #3730a3;
+  --destructive: #b91c1c;
+  --border: #e4e4e7;
+  --input: #c9c9d1;
+  --ring: #3730a3;
+  --radius: 0.75rem;
+}
+
+.theme-b {
+  --app-font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --app-font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --primary: #14532d;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #000000;
+  --muted: #f0f0ee;
+  --muted-foreground: #45453f;
+  --accent: #fde047; /* the focused field, as in Busy and Tally */
+  --accent-foreground: #000000;
+  --destructive: #b00020;
+  --border: #9b9b94;
+  --input: #6f6f68;
+  --ring: #000000;
+  --radius: 0rem;
+}
+
+.theme-c {
+  --app-font-sans: var(--font-atkinson), system-ui, sans-serif;
+  --app-font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+  --background: #fafaf7;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --primary: #b42318;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f0efe9;
+  --muted-foreground: #55534d;
+  --accent: #f0efe9;
+  --accent-foreground: #1a1a1a;
+  --destructive: #b42318;
+  --border: #d6d4cb;
+  --input: #a3a199;
+  --ring: #1a1a1a;
+  --radius: 0.375rem;
+}
+
+/* ---- Printed bill: A4 sheets, black on white, one copy per page ---- */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+.sheets {
+  background: #e7e7e7;
+  padding: 24px 12px 48px;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 24px;
+  padding: 12mm;
+  background: #ffffff;
+  color: #000000;
+  font-size: 10.5pt;
+  line-height: 1.4;
+  border: 1px solid #bdbdbd;
+}
+
+.sheet table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+@media screen and (max-width: 860px) {
+  .sheet {
+    zoom: 0.72;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .sheets {
+    padding: 12px 8px 32px;
+  }
+  .sheet {
+    zoom: 0.44;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .sheets {
+    background: #ffffff;
+    padding: 0;
+  }
+  .sheet {
+    height: 297mm;
+    margin: 0;
+    border: 0;
+    break-after: page;
+    zoom: 1;
+  }
+  .sheet:last-child {
+    break-after: auto;
+  }
+}
