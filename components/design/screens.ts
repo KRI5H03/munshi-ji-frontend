@@ -2,5 +2,4 @@
 export const SCREENS = [
   { slug: "items", name: "Items" },
   { slug: "settings", name: "Firm settings" },
-  { slug: "print", name: "Print (A4)" },
 ] as const;
