@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/client";
-import type { Invoice, SaleRow } from "@/lib/types";
+import type { Invoice, SaleDetail, SaleRow } from "@/lib/types";
 
 /** GET /api/sales: newest first, at most 100. `search` matches customer name or bill number. */
 export async function listSales(search: string, signal?: AbortSignal): Promise<SaleRow[]> {
@@ -26,4 +26,9 @@ export type CreateSaleBody = {
 export async function createSale(body: CreateSaleBody): Promise<Invoice> {
   const res = await api<{ invoice: Invoice }>("/sales", { method: "POST", body });
   return res.invoice;
+}
+
+/** GET /api/sales/:id: everything needed to show or print one bill. */
+export function getSale(id: string, signal?: AbortSignal): Promise<SaleDetail> {
+  return api<SaleDetail>(`/sales/${encodeURIComponent(id)}`, { signal });
 }

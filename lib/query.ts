@@ -21,6 +21,7 @@ export const keys = {
   /** Prefix for every bill list of a firm; invalidate this after saving a bill. */
   sales: (businessId: string) => ["firm", businessId, "sales"] as const,
   salesSearch: (businessId: string, search: string) => ["firm", businessId, "sales", { search }] as const,
+  sale: (businessId: string, id: string) => ["firm", businessId, "sales", "one", id] as const,
   /** Prefix for every item list; invalidate after a bill is saved, since stock changes. */
   items: (businessId: string) => ["firm", businessId, "items"] as const,
   itemsSearch: (businessId: string, search: string) => ["firm", businessId, "items", { search }] as const,
